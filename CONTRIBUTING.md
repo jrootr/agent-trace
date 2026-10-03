@@ -22,14 +22,12 @@ npm run coverage  # tests with a coverage table
 
 Versions follow [Semantic Versioning](https://semver.org).
 
+See [Releasing a new version](README.md#releasing-a-new-version) in the README. In short:
+
 ```bash
-npm version minor   # or patch / major: bumps package.json, dates the changelog, syncs the README badge, rebuilds dist/, commits and tags
-npm run badges      # refresh test and coverage badges (amend or commit)
-git push --follow-tags
+git switch -c release/v0.3.0 && npm version minor --no-git-tag-version && git commit -am "Release 0.3.0"
+git push -u origin release/v0.3.0     # PR → CI → merge
+git switch main && git pull && git tag v0.3.0 && git push origin v0.3.0
 ```
 
-Pushing a `v*` tag runs the release workflow:
-1. It checks that the tag matches `package.json`.
-2. It runs the tests.
-3. It publishes a GitHub release with notes from `CHANGELOG.md`, with `dist/agent-trace.html` attached.
-4. If an `NPM_TOKEN` secret is configured, it publishes to npm with provenance.
+The release workflow publishes the GitHub release and the npm package. npm uses trusted publishing, so no token is involved.

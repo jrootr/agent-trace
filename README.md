@@ -13,7 +13,7 @@
   <a href="https://github.com/jrootr/agent-trace/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/jrootr/agent-trace/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="tests" src="https://img.shields.io/badge/tests-60%20passing-2ea043?style=flat-square">
   <img alt="coverage" src="https://img.shields.io/badge/coverage-91%25-2ea043?style=flat-square">
-  <a href="CHANGELOG.md"><img alt="version" src="https://img.shields.io/badge/version-0.2.0-5b4ff5?style=flat-square"></a>
+  <a href="https://www.npmjs.com/package/@jrootr/agent-trace"><img alt="npm" src="https://img.shields.io/npm/v/@jrootr/agent-trace?style=flat-square&color=5b4ff5&logo=npm&label=npm"></a>
   <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A518.17-339933?style=flat-square&logo=nodedotjs&logoColor=white">
   <img alt="dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
   <img alt="OpenTelemetry" src="https://img.shields.io/badge/OpenTelemetry-GenAI%20semconv-425cc7?style=flat-square&logo=opentelemetry&logoColor=white">
@@ -90,15 +90,18 @@ The estimates are deliberately simple and labeled as such:
 Requires **Node.js 18.17 or newer**. There are no dependencies.
 
 ```bash
-# from GitHub, no clone needed
-npx github:jrootr/agent-trace view
+npx @jrootr/agent-trace view            # run it once, nothing to install
 
-# or clone it
-git clone https://github.com/jrootr/agent-trace.git
-cd agent-trace && npm link        # puts `agent-trace` on your PATH
+npm install -g @jrootr/agent-trace      # or install the `agent-trace` command
+agent-trace view
 ```
 
-Once it's published to npm: `npx @jrootr/agent-trace view`.
+To run from source, clone it and `npm link`:
+
+```bash
+git clone https://github.com/jrootr/agent-trace.git
+cd agent-trace && npm link
+```
 
 No CLI at all? Download `agent-trace.html` from the [latest release](https://github.com/jrootr/agent-trace/releases), or use `dist/agent-trace.html`. Open it in a browser and drop a trace file onto it.
 
@@ -254,15 +257,46 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the bundler rules and the release pro
 
 ## Versioning and releases
 
-agent-trace follows [Semantic Versioning](https://semver.org), and every change is recorded in [CHANGELOG.md](CHANGELOG.md).
+agent-trace follows [Semantic Versioning](https://semver.org), and every change is recorded in [CHANGELOG.md](CHANGELOG.md):
+- **patch** for fixes
+- **minor** for new features
+- **major** for breaking changes (while on 0.x, minor releases may also break things, and the changelog says so)
 
-`npm version <patch|minor|major>`:
-- dates the changelog
-- syncs the version badge
-- rebuilds `dist/`
-- commits and tags
+### Releasing a new version
 
-Pushing the tag triggers the release workflow. It verifies the tag, runs the checks, and publishes a GitHub release with the standalone viewer attached. When an `NPM_TOKEN` secret is set, it also publishes to npm with provenance.
+`main` is protected, so the version bump goes in through a pull request, and the tag goes on the merged commit.
+
+1. **Prepare the release on a branch.** Make sure `CHANGELOG.md` lists the changes under `## [Unreleased]`, then:
+
+   ```bash
+   git switch main && git pull
+   git switch -c release/v0.3.0
+   npm version minor --no-git-tag-version   # or patch | major. Use the matching version in the branch name.
+   git commit -am "Release 0.3.0"
+   git push -u origin release/v0.3.0
+   ```
+
+   `npm version` bumps `package.json`, turns *Unreleased* into a dated `## [0.3.0]` section, and rebuilds `dist/`.
+2. **Open the pull request, let CI pass, and merge it.**
+3. **Tag the merged commit.** This step starts the release:
+
+   ```bash
+   git switch main && git pull
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```
+
+- **The tag push** runs the [release workflow](.github/workflows/release.yml), which:
+  1. checks that the tag matches `package.json`
+  2. runs build, lint and tests
+  3. creates a **GitHub release** with notes from the changelog and the standalone `agent-trace.html` attached
+  4. **publishes to npm**
+
+npm publishing uses [trusted publishing](https://docs.npmjs.com/trusted-publishers): npm trusts this repository's `release.yml` through OpenID Connect, so no npm token is stored anywhere. Every version gets a provenance attestation linking it to the commit and workflow run that built it.
+
+To re-run a release, for example if a step failed, open **Actions → Release → Run workflow** and enter the existing tag. Steps that already succeeded are skipped: a GitHub release that exists is left alone, and a version already on npm isn't published again.
+
+Optionally, before releasing, `npm run badges` refreshes the test and coverage badges.
 
 ## Roadmap
 
@@ -274,7 +308,7 @@ Pushing the tag triggers the release workflow. It verifies the tag, runs the che
 | ✅ CLI: view, list, stats, export, send | **Trace diff** (M): two runs of the same task side by side |
 | ✅ CSP-locked reports, sanitization, redaction | **Browser UI tests** (M): Playwright smoke tests |
 | ✅ CI on 3 OSes × 4 Node versions, semver releases | **More importers** (S each): LangSmith, Langfuse, OpenAI Agents SDK, OTLP protobuf |
-| | **npm publish** (S): needs an `NPM_TOKEN` secret |
+| ✅ Published to npm with trusted publishing + provenance | |
 
 ## License
 
