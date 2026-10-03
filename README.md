@@ -264,16 +264,28 @@ agent-trace follows [Semantic Versioning](https://semver.org), and every change 
 
 ### Releasing a new version
 
-1. Under `## [Unreleased]` in `CHANGELOG.md`, list what changed. Commit it.
-2. From a clean working tree on `main`:
+`main` is protected, so the version bump goes in through a pull request, and the tag goes on the merged commit.
+
+1. **Prepare the release on a branch.** Make sure `CHANGELOG.md` lists the changes under `## [Unreleased]`, then:
 
    ```bash
-   npm version minor            # or: patch | major
-   git push --follow-tags
+   git switch main && git pull
+   git switch -c release/v0.3.0
+   npm version minor --no-git-tag-version   # or patch | major. Use the matching version in the branch name.
+   git commit -am "Release 0.3.0"
+   git push -u origin release/v0.3.0
    ```
 
-That's all.
-- **`npm version`** bumps `package.json`, turns *Unreleased* into a dated section, rebuilds `dist/`, commits, and tags `vX.Y.Z`.
+   `npm version` bumps `package.json`, turns *Unreleased* into a dated `## [0.3.0]` section, and rebuilds `dist/`.
+2. **Open the pull request, let CI pass, and merge it.**
+3. **Tag the merged commit.** This step starts the release:
+
+   ```bash
+   git switch main && git pull
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```
+
 - **The tag push** runs the [release workflow](.github/workflows/release.yml), which:
   1. checks that the tag matches `package.json`
   2. runs build, lint and tests

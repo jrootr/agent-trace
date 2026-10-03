@@ -25,8 +25,9 @@ Versions follow [Semantic Versioning](https://semver.org).
 See [Releasing a new version](README.md#releasing-a-new-version) in the README. In short:
 
 ```bash
-npm version minor   # or patch / major
-git push --follow-tags
+git switch -c release/v0.3.0 && npm version minor --no-git-tag-version && git commit -am "Release 0.3.0"
+git push -u origin release/v0.3.0     # PR → CI → merge
+git switch main && git pull && git tag v0.3.0 && git push origin v0.3.0
 ```
 
 The release workflow publishes the GitHub release and the npm package. npm uses trusted publishing, so no token is involved.
