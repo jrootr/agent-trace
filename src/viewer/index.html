@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="/*__CSP__*/">
 <title>agent-trace</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236d5efc' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 6h10M8 12h12M6 18h8'/%3E%3Ccircle cx='17' cy='6' r='2'/%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='17' cy='18' r='2'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/*__FAVICON__*/">
 <style>/*__STYLES__*/</style>
 </head>
 <body>
 <div id="app" class="app" data-state="empty">
   <header class="topbar">
     <div class="brand" title="agent-trace">
-      <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      <span class="brand-mark">/*__LOGO__*/</span>
       <span>agent-trace</span>
     </div>
     <div class="title-wrap">
@@ -67,8 +68,10 @@
           <kbd>/</kbd>
         </label>
         <div class="tree-actions">
+          <button class="btn-link with-icon" id="btn-order" type="button" title="Reverse the list order (o)" aria-pressed="false"></button>
           <button class="btn-link" id="btn-expand" type="button">Expand all</button>
           <button class="btn-link" id="btn-collapse" type="button">Collapse</button>
+          <button class="btn-link" id="btn-clear" type="button" title="Clear selection, search and filters (c)">Clear</button>
         </div>
         <div id="filter-chips" class="chips" role="group" aria-label="Filter spans"></div>
       </div>
@@ -85,7 +88,7 @@
 
   <div class="empty" id="empty">
     <div class="empty-card">
-      <div class="empty-mark" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
+      <div class="empty-mark" aria-hidden="true">/*__LOGO__*/</div>
       <h2>See what your agent actually did</h2>
       <p>Drop a trace anywhere on this page, or open one. Nothing leaves your machine.</p>
       <button class="btn primary" id="empty-open" type="button">Open a trace file</button>
@@ -103,7 +106,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <dialog id="help" class="help" aria-labelledby="help-title">
-    <div class="help-head"><h2 id="help-title">Keyboard &amp; mouse</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="help-head"><h2 id="help-title">Keyboard &amp; mouse <span class="version">agent-trace v/*__VERSION__*/</span></h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="help-grid">
       <section><h3>Timeline</h3><dl>
         <div><dt>Scroll</dt><dd>Zoom at the cursor</dd></div>
@@ -120,10 +123,14 @@
         <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next moment</dd></div>
         <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
         <div><dt><kbd>d</kbd> <kbd>i</kbd></dt><dd>Details / Insights tab</dd></div>
+        <div><dt><kbd>o</kbd></dt><dd>Oldest / newest first (list)</dd></div>
+        <div><dt><kbd>c</kbd></dt><dd>Clear selection, search, filters</dd></div>
+        <div><dt>Shift + click a chip</dt><dd>Show only that category</dd></div>
         <div><dt><kbd>t</kbd></dt><dd>Theme: system, light, dark</dd></div>
         <div><dt><kbd>Esc</kbd></dt><dd>Clear selection</dd></div>
       </dl></section>
     </div>
+    <p class="note"><b>Opportunities</b> (Insights tab) are estimated savings with the calls that prove them: redundant reads, repeated failures, one-at-a-time lookups, bloated outputs, cache expiry, slow test loops, edit churn and repeated routines. Insights follow your selection, the whole session, or the visible timeline range.</p>
     <p class="note"><b>Moments</b> are inferred turning points: errors and how the agent recovered, shifts between exploring, building and verifying, unusually heavy thinking, and times you steered it mid-task.</p>
   </dialog>
 </div>

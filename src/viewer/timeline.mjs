@@ -696,6 +696,15 @@ export function createTimeline({ canvas, overview, tooltip, store, onSelect }) {
     requestDraw();
   });
 
+  function zoomToRange(t0, t1) {
+    const { scale } = store.get();
+    if (!scale) return;
+    const a = scale.toV(t0);
+    const b = scale.toV(t1);
+    const pad = Math.max(b - a, 400) * 0.08;
+    setView(a - pad, Math.max(b, a + 400) + pad, true);
+  }
+
   function zoomBy(factor) {
     const { view } = store.get();
     if (!view) return;
@@ -707,6 +716,7 @@ export function createTimeline({ canvas, overview, tooltip, store, onSelect }) {
   return {
     fit,
     zoomBy,
+    zoomToRange,
     zoomToSpan,
     reveal,
     refreshPalette() {

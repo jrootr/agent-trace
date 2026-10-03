@@ -1,6 +1,6 @@
 {
-  "name": "agent-trace",
-  "version": "0.1.0",
+  "name": "@jrootr/agent-trace",
+  "version": "0.2.0",
   "description": "See what your AI agent actually did: an interactive timeline and call tree for Claude Code sessions and OpenTelemetry traces, in one self-contained HTML file.",
   "type": "module",
   "license": "MIT",
@@ -17,13 +17,16 @@
     "agent-trace": "bin/agent-trace.mjs"
   },
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./src/index.mjs",
+    "./package.json": "./package.json"
   },
   "files": [
     "bin/",
     "src/",
     "dist/",
+    "docs/logo.svg",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "engines": {
@@ -31,8 +34,13 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test test/core.test.mjs test/claude-code.test.mjs test/otlp.test.mjs test/viewer-logic.test.mjs test/build.test.mjs test/cli.test.mjs test/perf.test.mjs",
-    "check": "npm run build && npm test"
+    "test": "node --test test/core.test.mjs test/claude-code.test.mjs test/otlp.test.mjs test/viewer-logic.test.mjs test/build.test.mjs test/cli.test.mjs test/opportunities.test.mjs test/security.test.mjs test/perf.test.mjs",
+    "check": "npm run build && npm run lint && npm test",
+    "coverage": "node --test --experimental-test-coverage test/core.test.mjs test/claude-code.test.mjs test/otlp.test.mjs test/viewer-logic.test.mjs test/build.test.mjs test/cli.test.mjs test/opportunities.test.mjs test/security.test.mjs test/perf.test.mjs",
+    "badges": "node scripts/release-tools.mjs badges",
+    "version": "node scripts/release-tools.mjs version && git add CHANGELOG.md README.md dist/",
+    "lint": "node scripts/lint.mjs",
+    "prepublishOnly": "npm run check"
   },
   "keywords": [
     "ai-agents",
@@ -43,5 +51,8 @@
     "observability",
     "llm",
     "visualization"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

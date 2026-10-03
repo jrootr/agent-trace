@@ -78,6 +78,33 @@ export function indexTrace(trace) {
   return { byId, children };
 }
 
+const KINDS = new Set(['session', 'turn', 'llm', 'tool', 'agent', 'span']);
+const STATUSES = new Set(['ok', 'error', 'unset']);
+const TOOL_CATEGORIES = new Set(['read', 'write', 'exec', 'web', 'agent', 'mcp', 'meta', 'other']);
+const PHASES = new Set(['explore', 'build', 'verify']);
+
+/**
+ * Force the fields the viewer uses in markup (CSS variables, class names) into known values.
+ * Traces come from files people share; a crafted kind or category must not reach the DOM raw.
+ */
+export function sanitizeTrace(trace) {
+  for (const s of trace.spans ?? []) {
+    if (!KINDS.has(s.kind)) s.kind = 'span';
+    if (!STATUSES.has(s.status)) s.status = 'unset';
+    if (typeof s.name !== 'string') s.name = String(s.name ?? s.kind);
+    if (!s.attrs || typeof s.attrs !== 'object' || Array.isArray(s.attrs)) s.attrs = {};
+    const cat = s.attrs['tool.category'];
+    if (cat !== undefined && !TOOL_CATEGORIES.has(cat)) s.attrs['tool.category'] = 'other';
+    const phase = s.attrs['tool.phase'];
+    if (phase != null && !PHASES.has(phase)) s.attrs['tool.phase'] = null;
+  }
+  for (const e of trace.events ?? []) {
+    e.kind = String(e.kind ?? 'event');
+    e.label = String(e.label ?? '');
+  }
+  return trace;
+}
+
 /** Problems that would make a trace unusable in the viewer. Empty array = valid. */
 export function validateTrace(trace) {
   const problems = [];

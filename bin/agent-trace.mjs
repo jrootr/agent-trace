@@ -87,7 +87,7 @@ function slug(s) {
 
 function openInBrowser(file) {
   const [cmd, cmdArgs] = process.platform === 'win32'
-    ? ['cmd', ['/c', 'start', '""', file]]
+    ? ['explorer.exe', [file]]
     : process.platform === 'darwin' ? ['open', [file]] : ['xdg-open', [file]];
   try {
     spawn(cmd, cmdArgs, { detached: true, stdio: 'ignore', windowsHide: true }).unref();

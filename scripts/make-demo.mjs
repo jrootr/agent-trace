@@ -64,7 +64,7 @@ step({ think: 5, tools: [
   ['Edit', { file_path: '/home/dev/shop-api/src/app.ts', old_string: 'app.use(auth())', new_string: 'app.use(auth())\napp.use(rateLimit(config.rateLimit))' }, 0.2, 'Updated'],
   ['Edit', { file_path: '/home/dev/shop-api/src/config.ts', old_string: 'port: 8080', new_string: 'port: 8080, rateLimit: { perMinute: 100 }' }, 0.2, 'Updated'],
 ] });
-step({ think: 3, tools: [['Bash', { command: 'npm test', description: 'Run the test suite' }, 38, 'FAIL tests/orders.test.ts\n  ✕ lists orders (429 Too Many Requests)\n  ✕ creates an order (429 Too Many Requests)\n\nTests: 2 failed, 41 passed', true]] });
+step({ think: 3, tools: [['Bash', { command: 'npm test', description: 'Run the test suite' }, 38, 'FAIL tests/orders.test.ts\n  ✕ lists orders (429 Too Many Requests)\n  ✕ creates an order (429 Too Many Requests)\n\n' + '    at Object.<anonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n'.repeat(140) + '\nTests: 2 failed, 41 passed', true]] });
 step({ think: 31, thinking: 6400, out: 420, text: 'The tests share one client id, so the limiter trips across tests. The bucket should reset between tests and the test client needs a higher limit.', tools: [
   ['Read', { file_path: '/home/dev/shop-api/tests/helpers.ts' }, 0.2, 'export const client = request(app).set("x-client", "test")'],
 ] });
@@ -105,6 +105,13 @@ step({ think: 4, out: 200, text: 'Fixed the shared anonymous bucket; lint and te
 wait(3 * 60);
 prompt('looks good, open a PR');
 step({ think: 3, tools: [['Bash', { command: 'git status --short', description: 'Show changes' }, 0.3, ' M src/app.ts\n M src/config.ts\n?? src/middleware/rateLimit.ts']] });
+// gathering PR context one file at a time, and re-reading things it already had
+step({ think: 4, tools: [['Read', { file_path: '/home/dev/shop-api/package.json' }, 0.2, '{ "name": "shop-api", "version": "1.8.0" }']] });
+step({ think: 5, tools: [['Read', { file_path: '/home/dev/shop-api/CHANGELOG.md' }, 0.2, '## 1.8.0\n- Orders pagination']] });
+step({ think: 4, tools: [['Grep', { pattern: 'x-client', path: 'src' }, 0.4, 'src/middleware/auth.ts:9']] });
+step({ think: 5, tools: [['Read', { file_path: '/home/dev/shop-api/package.json' }, 0.2, '{ "name": "shop-api", "version": "1.8.0" }']] });
+step({ think: 4, tools: [['Read', { file_path: '/home/dev/shop-api/CHANGELOG.md' }, 0.2, '## 1.8.0\n- Orders pagination']] });
+step({ think: 4, tools: [['Edit', { file_path: '/home/dev/shop-api/CHANGELOG.md', old_string: '## 1.8.0', new_string: '## 1.9.0\n- Per-client rate limiting\n\n## 1.8.0' }, 0.2, 'Updated']] });
 step({ think: 4, tools: [['Bash', { command: 'git add -A && git commit -m "Add per-client rate limiting"', description: 'Commit' }, 1.1, '[feature/rate-limit 3f2c1aa] Add per-client rate limiting']] });
 step({ think: 2, tools: [['Bash', { command: 'git push -u origin feature/rate-limit', description: 'Push branch' }, 2.4, 'branch set up to track origin/feature/rate-limit']] });
 step({ think: 5, tools: [['mcp__github__create_pull_request', { title: 'Add per-client rate limiting', base: 'main', head: 'feature/rate-limit' }, 1.8, 'Created PR #128']] });

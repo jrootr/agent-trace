@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-rIitE3rs+uJw/stCDL8Frg21VLvDRgYpx6Jtv9sBMw0='; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>agent-trace</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236d5efc' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 6h10M8 12h12M6 18h8'/%3E%3Ccircle cx='17' cy='6' r='2'/%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='17' cy='18' r='2'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20role%3D%22img%22%20aria-label%3D%22agent-trace%20logo%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%238b7dff%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%235b4ff5%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%233b2fc9%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22shine%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220.22%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.5%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22moment%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffd27a%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9f43%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2230%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2230%22%20fill%3D%22url(%23shine)%22%2F%3E%0A%20%20%3C!--%20the%20trace%3A%20three%20lanes%20of%20activity%2C%20staggered%20like%20a%20timeline%20--%3E%0A%20%20%3Crect%20x%3D%2222%22%20y%3D%2233%22%20width%3D%2244%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%2F%3E%0A%20%20%3Crect%20x%3D%2240%22%20y%3D%2258%22%20width%3D%2266%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%20fill-opacity%3D%220.78%22%2F%3E%0A%20%20%3Crect%20x%3D%2228%22%20y%3D%2283%22%20width%3D%2230%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%20fill-opacity%3D%220.55%22%2F%3E%0A%20%20%3Crect%20x%3D%2264%22%20y%3D%2283%22%20width%3D%2218%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%20fill-opacity%3D%220.55%22%2F%3E%0A%20%20%3C!--%20the%20dotted%20thread%20connecting%20them%3A%20the%20agent's%20path%20--%3E%0A%20%20%3Cpath%20d%3D%22M66%2039.5%20H78%20Q84%2039.5%2084%2045.5%20V58%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-opacity%3D%220.6%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-dasharray%3D%220.1%206%22%2F%3E%0A%20%20%3C!--%20a%20%22moment%22%3A%20the%20point%20where%20the%20agent%20changed%20course%20--%3E%0A%20%20%3Cpath%20d%3D%22M92%2026%20L102%2036%20L92%2046%20L82%2036%20Z%22%20fill%3D%22url(%23moment)%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>/* agent-trace viewer. Design tokens first; light is the default, dark via media query or [data-theme]. */
 :root {
   --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -201,6 +202,9 @@ kbd {
 }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -0.01em; color: var(--accent); flex: none; }
 .brand span { color: var(--text); }
+.brand-mark { display: block; width: 26px; height: 26px; }
+.brand-mark svg, .empty-mark svg { display: block; width: 100%; height: 100%; }
+.help .version { margin-left: 8px; color: var(--text-3); font-size: 12px; font-weight: 500; }
 .title-wrap { min-width: 0; flex: 1 1 auto; padding-left: 16px; border-left: 1px solid var(--line); }
 .trace-title { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trace-meta { color: var(--text-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -440,7 +444,7 @@ kbd {
 /* ---------- overlays ---------- */
 .empty { grid-row: 2 / -1; grid-column: 1; display: grid; place-items: center; padding: 24px; }
 .empty-card { max-width: 560px; text-align: center; padding: 40px 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
-.empty-mark { display: inline-grid; place-items: center; width: 72px; height: 72px; border-radius: 20px; color: var(--accent); background: var(--accent-soft); margin-bottom: 16px; }
+.empty-mark { display: inline-block; width: 72px; height: 72px; margin-bottom: 16px; filter: drop-shadow(0 8px 20px rgba(91, 79, 245, 0.35)); }
 .empty-card h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.02em; }
 .empty-card > p { color: var(--text-2); margin: 0 0 20px; }
 .formats { list-style: none; padding: 0; margin: 24px 0 16px; text-align: left; display: flex; flex-direction: column; gap: 8px; }
@@ -497,13 +501,106 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---------- insights: scope, opportunities, story, rankings ---------- */
+.btn-link.with-icon { display: inline-flex; align-items: center; gap: 4px; }
+.btn-link[aria-pressed="true"] { color: var(--accent); }
+.chip.evidence { color: var(--text); font-weight: 600; max-width: 100%; }
+.chip.evidence .icon { opacity: .7; }
+.section-note { margin: -4px 0 8px; }
+
+.scope-bar { display: flex; flex-direction: column; gap: 6px; }
+.seg { display: inline-flex; align-self: flex-start; padding: 2px; border-radius: var(--radius-sm); background: var(--panel-3); border: 1px solid var(--line); }
+.seg-btn { height: 26px; padding: 0 12px; border: 0; border-radius: 5px; background: none; cursor: pointer; color: var(--text-3); font-size: 12px; font-weight: 600; }
+.seg-btn[aria-checked="true"] { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+.scope-label { color: var(--text-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.gains { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid color-mix(in srgb, var(--inf-milestone) 35%, var(--line)); background: color-mix(in srgb, var(--inf-milestone) 7%, var(--panel)); margin-bottom: 10px; }
+.gains-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.gains-head b { font-size: 14px; }
+.gains-head span { color: var(--text-2); }
+.gains.is-clean { flex-direction: column; gap: 2px; }
+.gains.is-clean span { color: var(--text-3); font-size: 12px; }
+.gains-bar { height: 6px; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
+.gains-bar i { display: block; height: 100%; border-radius: 3px; background: var(--inf-milestone); }
+.opp-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.opp { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel-2); }
+.opp-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--inf-milestone); background: color-mix(in srgb, var(--inf-milestone) 13%, transparent); }
+.opp.conf-low .opp-icon { color: var(--text-3); background: var(--panel-3); }
+.opp-body { min-width: 0; }
+.opp-kind { display: flex; gap: 8px; align-items: baseline; color: var(--text-3); font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; }
+.opp-conf { font-weight: 500; text-transform: none; letter-spacing: 0; }
+.opp h4 { margin: 2px 0 4px; font-size: 13.5px; line-height: 1.35; }
+.opp-detail { margin: 0 0 6px; color: var(--text-2); font-size: 12.5px; }
+.opp-action { margin: 0 0 8px; font-size: 12.5px; }
+.opp-action b { color: var(--inf-milestone); }
+.opp-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.opp-foot .btn { margin-left: auto; }
+.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: var(--inf-milestone); background: color-mix(in srgb, var(--inf-milestone) 12%, transparent); font-variant-numeric: tabular-nums; }
+
+.split-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; margin-bottom: 8px; background: var(--panel-3); }
+.split-bar i { display: block; height: 100%; }
+.sp-model { background: var(--llm); }
+.sp-tools { background: var(--cat-exec); }
+.sp-wait { background: var(--line-strong); }
+.legend i.sp-model, .legend i.sp-tools, .legend i.sp-wait { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.story { list-style: none; margin: 0; padding: 0 0 0 10px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.story button { position: relative; display: flex; width: 100%; border: 0; background: none; cursor: pointer; text-align: left; border-radius: var(--radius-sm); }
+.story button:hover { background: var(--panel-2); }
+.story-say button { flex-direction: column; gap: 2px; padding: 7px 10px; }
+.story-say button::before { content: ""; position: absolute; left: -16px; top: 13px; width: 8px; height: 8px; border-radius: 50%; background: var(--llm); box-shadow: 0 0 0 3px var(--panel); }
+.story-say.is-current button { background: var(--sel-row); }
+.story-text { color: var(--text); font-size: 12.5px; line-height: 1.45; }
+.story-meta { display: flex; gap: 8px; color: var(--text-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.story-think { color: var(--inf-thinking); }
+.story-moment button { align-items: center; gap: 8px; padding: 4px 10px; color: var(--c); font-size: 12px; font-weight: 600; }
+.story-moment button::before { content: ""; position: absolute; left: -15px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 1px; transform: rotate(45deg); background: var(--c); box-shadow: 0 0 0 3px var(--panel); }
+.story-moment span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.story-moment time { color: var(--text-3); font-weight: 500; font-size: 11px; }
+
+.rank { display: flex; flex-direction: column; gap: 2px; }
+.rank-row { display: grid; grid-template-columns: 10px 1fr 64px 56px; align-items: center; gap: 10px; padding: 6px 8px; border: 0; border-radius: var(--radius-sm); background: none; cursor: pointer; text-align: left; }
+.rank-row:hover { background: var(--panel-2); }
+.rank-row .dot { width: 8px; height: 8px; border-radius: 50%; }
+.rank-name { min-width: 0; display: flex; flex-direction: column; font-weight: 550; }
+.rank-name small { color: var(--text-3); font-weight: 400; font-family: var(--font-mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-row .bar-cell { width: 64px; margin: 0; }
+.rank-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 12px; }
 </style>
 </head>
 <body>
 <div id="app" class="app" data-state="empty">
   <header class="topbar">
     <div class="brand" title="agent-trace">
-      <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      <span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b7dff"/>
+      <stop offset="0.55" stop-color="#5b4ff5"/>
+      <stop offset="1" stop-color="#3b2fc9"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="moment" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#ff9f43"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+  <rect width="128" height="128" rx="30" fill="url(#shine)"/>
+  <!-- the trace: three lanes of activity, staggered like a timeline -->
+  <rect x="22" y="33" width="44" height="13" rx="6.5" fill="#fff"/>
+  <rect x="40" y="58" width="66" height="13" rx="6.5" fill="#fff" fill-opacity="0.78"/>
+  <rect x="28" y="83" width="30" height="13" rx="6.5" fill="#fff" fill-opacity="0.55"/>
+  <rect x="64" y="83" width="18" height="13" rx="6.5" fill="#fff" fill-opacity="0.55"/>
+  <!-- the dotted thread connecting them: the agent's path -->
+  <path d="M66 39.5 H78 Q84 39.5 84 45.5 V58" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 6"/>
+  <!-- a "moment": the point where the agent changed course -->
+  <path d="M92 26 L102 36 L92 46 L82 36 Z" fill="url(#moment)" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</svg></span>
       <span>agent-trace</span>
     </div>
     <div class="title-wrap">
@@ -558,8 +655,10 @@ kbd {
           <kbd>/</kbd>
         </label>
         <div class="tree-actions">
+          <button class="btn-link with-icon" id="btn-order" type="button" title="Reverse the list order (o)" aria-pressed="false"></button>
           <button class="btn-link" id="btn-expand" type="button">Expand all</button>
           <button class="btn-link" id="btn-collapse" type="button">Collapse</button>
+          <button class="btn-link" id="btn-clear" type="button" title="Clear selection, search and filters (c)">Clear</button>
         </div>
         <div id="filter-chips" class="chips" role="group" aria-label="Filter spans"></div>
       </div>
@@ -576,7 +675,34 @@ kbd {
 
   <div class="empty" id="empty">
     <div class="empty-card">
-      <div class="empty-mark" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
+      <div class="empty-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b7dff"/>
+      <stop offset="0.55" stop-color="#5b4ff5"/>
+      <stop offset="1" stop-color="#3b2fc9"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="moment" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#ff9f43"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+  <rect width="128" height="128" rx="30" fill="url(#shine)"/>
+  <!-- the trace: three lanes of activity, staggered like a timeline -->
+  <rect x="22" y="33" width="44" height="13" rx="6.5" fill="#fff"/>
+  <rect x="40" y="58" width="66" height="13" rx="6.5" fill="#fff" fill-opacity="0.78"/>
+  <rect x="28" y="83" width="30" height="13" rx="6.5" fill="#fff" fill-opacity="0.55"/>
+  <rect x="64" y="83" width="18" height="13" rx="6.5" fill="#fff" fill-opacity="0.55"/>
+  <!-- the dotted thread connecting them: the agent's path -->
+  <path d="M66 39.5 H78 Q84 39.5 84 45.5 V58" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 6"/>
+  <!-- a "moment": the point where the agent changed course -->
+  <path d="M92 26 L102 36 L92 46 L82 36 Z" fill="url(#moment)" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</svg></div>
       <h2>See what your agent actually did</h2>
       <p>Drop a trace anywhere on this page, or open one. Nothing leaves your machine.</p>
       <button class="btn primary" id="empty-open" type="button">Open a trace file</button>
@@ -594,7 +720,7 @@ kbd {
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <dialog id="help" class="help" aria-labelledby="help-title">
-    <div class="help-head"><h2 id="help-title">Keyboard &amp; mouse</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="help-head"><h2 id="help-title">Keyboard &amp; mouse <span class="version">agent-trace v0.2.0</span></h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="help-grid">
       <section><h3>Timeline</h3><dl>
         <div><dt>Scroll</dt><dd>Zoom at the cursor</dd></div>
@@ -611,14 +737,18 @@ kbd {
         <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next moment</dd></div>
         <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
         <div><dt><kbd>d</kbd> <kbd>i</kbd></dt><dd>Details / Insights tab</dd></div>
+        <div><dt><kbd>o</kbd></dt><dd>Oldest / newest first (list)</dd></div>
+        <div><dt><kbd>c</kbd></dt><dd>Clear selection, search, filters</dd></div>
+        <div><dt>Shift + click a chip</dt><dd>Show only that category</dd></div>
         <div><dt><kbd>t</kbd></dt><dd>Theme: system, light, dark</dd></div>
         <div><dt><kbd>Esc</kbd></dt><dd>Clear selection</dd></div>
       </dl></section>
     </div>
+    <p class="note"><b>Opportunities</b> (Insights tab) are estimated savings with the calls that prove them: redundant reads, repeated failures, one-at-a-time lookups, bloated outputs, cache expiry, slow test loops, edit churn and repeated routines. Insights follow your selection, the whole session, or the visible timeline range.</p>
     <p class="note"><b>Moments</b> are inferred turning points: errors and how the agent recovered, shifts between exploring, building and verifying, unusually heavy thinking, and times you steered it mid-task.</p>
   </dialog>
 </div>
-<script type="application/json" id="agent-trace-data">{"generator":"agent-trace 0.1.0","generatedAt":"2026-10-03T16:48:09.190Z","traces":[{"schema":1,"id":"7d3c1f0e-5a2b-4c8d-9e6f-0a1b2c3d4e5f","title":"Add rate limiting to the orders API","source":"claude-code","start":1776157920000,"end":1776159987200,"spans":[{"id":"session","parentId":null,"kind":"session","name":"Add rate limiting to the orders API","start":1776157920000,"end":1776159987200,"status":"ok","attrs":{}},{"id":"turn-1","parentId":"session","kind":"turn","name":"Add per-client rate limiting to the orders API (100 req/min) and make sure the …","start":1776157920000,"end":1776158135300,"status":"ok","attrs":{"turn.index":1},"input":"Add per-client rate limiting to the orders API (100 req/min) and make sure the tests pass."},{"id":"llm-msg_demo_1","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157920000,"end":1776157926000,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":18680,"llm.tokens.cache_write":896,"llm.tokens.context":19580,"llm.tokens.output":2080,"llm.tokens.thinking":1900,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":2}},{"id":"tool-toolu_demo_1","parentId":"turn-1","kind":"tool","name":"Glob","start":1776157926000,"end":1776157926400,"status":"ok","attrs":{"tool.call_id":"toolu_demo_1","tool.category":"read","tool.phase":"explore","tool.summary":"src/**/*.ts","tool.requested_by":"llm-msg_demo_1"},"input":{"pattern":"src/**/*.ts"},"output":"src/app.ts\nsrc/routes/orders.ts\nsrc/middleware/auth.ts\nsrc/config.ts"},{"id":"tool-toolu_demo_2","parentId":"turn-1","kind":"tool","name":"Grep","start":1776157926000,"end":1776157926600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_2","tool.category":"read","tool.phase":"explore","tool.summary":"src","tool.requested_by":"llm-msg_demo_1"},"input":{"pattern":"app.use\\(","path":"src"},"output":"src/app.ts:14: app.use(auth())\nsrc/app.ts:15: app.use(json())"},{"id":"llm-msg_demo_2","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157926600,"end":1776157929600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":20260,"llm.tokens.cache_write":896,"llm.tokens.context":21160,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":3}},{"id":"tool-toolu_demo_3","parentId":"turn-1","kind":"tool","name":"Read","start":1776157929600,"end":1776157929800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_3","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/app.ts","tool.requested_by":"llm-msg_demo_2"},"input":{"file_path":"/home/dev/shop-api/src/app.ts"},"output":"import express from \"express\";\n…"},{"id":"tool-toolu_demo_4","parentId":"turn-1","kind":"tool","name":"Read","start":1776157929600,"end":1776157929800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_4","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/middleware/auth.ts","tool.requested_by":"llm-msg_demo_2"},"input":{"file_path":"/home/dev/shop-api/src/middleware/auth.ts"},"output":"export function auth() { … }"},{"id":"tool-toolu_demo_5","parentId":"turn-1","kind":"tool","name":"Read","start":1776157929600,"end":1776157929800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_5","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/config.ts","tool.requested_by":"llm-msg_demo_2"},"input":{"file_path":"/home/dev/shop-api/src/config.ts"},"output":"export const config = { port: 8080 };"},{"id":"llm-msg_demo_3","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157929800,"end":1776157943800,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":21840,"llm.tokens.cache_write":896,"llm.tokens.context":22740,"llm.tokens.output":2780,"llm.tokens.thinking":2600,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1},"output":"I'll add a token-bucket middleware keyed by API client, wire it into the app, and make the limit configurable."},{"id":"tool-toolu_demo_6","parentId":"turn-1","kind":"tool","name":"Write","start":1776157943800,"end":1776157944100,"status":"ok","attrs":{"tool.call_id":"toolu_demo_6","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_3"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","content":"export function rateLimit(opts) { … }"},"output":"File created"},{"id":"llm-msg_demo_4","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157944100,"end":1776157949100,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":23420,"llm.tokens.cache_write":896,"llm.tokens.context":24320,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":2}},{"id":"tool-toolu_demo_7","parentId":"turn-1","kind":"tool","name":"Edit","start":1776157949100,"end":1776157949300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_7","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/app.ts","tool.requested_by":"llm-msg_demo_4"},"input":{"file_path":"/home/dev/shop-api/src/app.ts","old_string":"app.use(auth())","new_string":"app.use(auth())\napp.use(rateLimit(config.rateLimit))"},"output":"Updated"},{"id":"tool-toolu_demo_8","parentId":"turn-1","kind":"tool","name":"Edit","start":1776157949100,"end":1776157949300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_8","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/config.ts","tool.requested_by":"llm-msg_demo_4"},"input":{"file_path":"/home/dev/shop-api/src/config.ts","old_string":"port: 8080","new_string":"port: 8080, rateLimit: { perMinute: 100 }"},"output":"Updated"},{"id":"llm-msg_demo_5","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157949300,"end":1776157952300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":25000,"llm.tokens.cache_write":896,"llm.tokens.context":25900,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_9","parentId":"turn-1","kind":"tool","name":"Bash","start":1776157952300,"end":1776157990300,"status":"error","attrs":{"tool.call_id":"toolu_demo_9","tool.category":"exec","tool.phase":"verify","tool.summary":"Run the test suite","tool.requested_by":"llm-msg_demo_5","error.message":"FAIL tests/orders.test.ts ✕ lists orders (429 Too Many Requests) ✕ creates an order (429 Too Many Requests) Tests: 2 failed, 41 passed"},"input":{"command":"npm test","description":"Run the test suite"},"output":"FAIL tests/orders.test.ts\n  ✕ lists orders (429 Too Many Requests)\n  ✕ creates an order (429 Too Many Requests)\n\nTests: 2 failed, 41 passed"},{"id":"llm-msg_demo_6","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157990300,"end":1776158021300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":26580,"llm.tokens.cache_write":896,"llm.tokens.context":27480,"llm.tokens.output":6580,"llm.tokens.thinking":6400,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1},"output":"The tests share one client id, so the limiter trips across tests. The bucket should reset between tests and the test client needs a higher limit."},{"id":"tool-toolu_demo_10","parentId":"turn-1","kind":"tool","name":"Read","start":1776158021300,"end":1776158021500,"status":"ok","attrs":{"tool.call_id":"toolu_demo_10","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/tests/helpers.ts","tool.requested_by":"llm-msg_demo_6"},"input":{"file_path":"/home/dev/shop-api/tests/helpers.ts"},"output":"export const client = request(app).set(\"x-client\", \"test\")"},{"id":"llm-msg_demo_7","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158021500,"end":1776158027500,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":28160,"llm.tokens.cache_write":896,"llm.tokens.context":29060,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":2}},{"id":"tool-toolu_demo_11","parentId":"turn-1","kind":"tool","name":"Edit","start":1776158027500,"end":1776158027700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_11","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_7"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","old_string":"const buckets = new Map()","new_string":"export const buckets = new Map()"},"output":"Updated"},{"id":"tool-toolu_demo_12","parentId":"turn-1","kind":"tool","name":"Edit","start":1776158027500,"end":1776158027700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_12","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/tests/helpers.ts","tool.requested_by":"llm-msg_demo_7"},"input":{"file_path":"/home/dev/shop-api/tests/helpers.ts","old_string":"export const client","new_string":"afterEach(() => buckets.clear());\nexport const client"},"output":"Updated"},{"id":"llm-msg_demo_8","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158031700,"end":1776158035700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":29740,"llm.tokens.cache_write":896,"llm.tokens.context":30640,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_13","parentId":"turn-1","kind":"tool","name":"Bash","start":1776158035700,"end":1776158071700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_13","tool.category":"exec","tool.phase":"verify","tool.summary":"Run the test suite","tool.requested_by":"llm-msg_demo_8"},"input":{"command":"npm test","description":"Run the test suite"},"output":"Tests: 43 passed"},{"id":"llm-msg_demo_9","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158071700,"end":1776158078700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":31320,"llm.tokens.cache_write":896,"llm.tokens.context":32220,"llm.tokens.output":1080,"llm.tokens.thinking":900,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1}},{"id":"tool-toolu_demo_14","parentId":"turn-1","kind":"tool","name":"Edit","start":1776158078700,"end":1776158078900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_14","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_9"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","old_string":"next()","new_string":"res.setHeader(\"X-RateLimit-Remaining\", String(bucket.tokens));\nnext()"},"output":"Updated"},{"id":"llm-msg_demo_10","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158078900,"end":1776158083900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":32900,"llm.tokens.cache_write":896,"llm.tokens.context":33800,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_15","parentId":"turn-1","kind":"tool","name":"Write","start":1776158083900,"end":1776158084200,"status":"ok","attrs":{"tool.call_id":"toolu_demo_15","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/tests/rateLimit.test.ts","tool.requested_by":"llm-msg_demo_10"},"input":{"file_path":"/home/dev/shop-api/tests/rateLimit.test.ts","content":"it(\"returns 429 after the limit\", …)"},"output":"File created"},{"id":"llm-msg_demo_11","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158084200,"end":1776158087200,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":34480,"llm.tokens.cache_write":896,"llm.tokens.context":35380,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_16","parentId":"turn-1","kind":"tool","name":"Bash","start":1776158087200,"end":1776158128200,"status":"ok","attrs":{"tool.call_id":"toolu_demo_16","tool.category":"exec","tool.phase":"verify","tool.summary":"Run the test suite","tool.requested_by":"llm-msg_demo_11"},"input":{"command":"npm test","description":"Run the test suite"},"output":"Tests: 46 passed"},{"id":"llm-msg_demo_12","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158128200,"end":1776158130200,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":36060,"llm.tokens.cache_write":896,"llm.tokens.context":36960,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_17","parentId":"turn-1","kind":"tool","name":"mcp__ccd_session__mark_chapter","start":1776158130200,"end":1776158130300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_17","tool.category":"mcp","tool.phase":null,"tool.summary":"Rate limiting works","tool.requested_by":"llm-msg_demo_12"},"input":{"title":"Rate limiting works","summary":"Middleware, config, header, tests"},"output":"Chapter marked"},{"id":"llm-msg_demo_13","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158130300,"end":1776158135300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":37640,"llm.tokens.cache_write":896,"llm.tokens.context":38540,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"Rate limiting is in: 100 requests/minute per client, configurable, with an X-RateLimit-Remaining header. All 46 tests pass."},{"id":"turn-2","parentId":"session","kind":"turn","name":"/review src/middleware","start":1776159695300,"end":1776159784600,"status":"ok","attrs":{"turn.index":2},"input":"\u003ccommand-message>review\u003c/command-message>\n\u003ccommand-name>/review\u003c/command-name>\n\u003ccommand-args>src/middleware\u003c/command-args>"},{"id":"llm-msg_demo_14","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159695300,"end":1776159699300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":39220,"llm.tokens.cache_write":896,"llm.tokens.context":40120,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"agent-1","parentId":"tool-toolu_demo_18","kind":"agent","name":"Review rate limit middleware","start":1776159699300,"end":1776159723900,"status":"ok","attrs":{"agent.id":"review-1"}},{"id":"a1-llm-msg_demo_15","parentId":"agent-1","kind":"llm","name":"claude-opus-demo","start":1776159699300,"end":1776159702300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":40800,"llm.tokens.cache_write":896,"llm.tokens.context":41700,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":2}},{"id":"tool-toolu_demo_18","parentId":"turn-2","kind":"tool","name":"Agent","start":1776159699300,"end":1776159724400,"status":"ok","attrs":{"tool.call_id":"toolu_demo_18","tool.category":"agent","tool.phase":null,"tool.summary":"Review rate limit middleware","tool.requested_by":"llm-msg_demo_14"},"input":{"description":"Review rate limit middleware","prompt":"Review src/middleware/rateLimit.ts for correctness and edge cases"},"output":"One issue: unauthenticated requests share one bucket. Key them by IP."},{"id":"a1-tool-toolu_demo_19","parentId":"agent-1","kind":"tool","name":"Read","start":1776159702300,"end":1776159702500,"status":"ok","attrs":{"tool.call_id":"toolu_demo_19","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"a1-llm-msg_demo_15"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts"},"output":"…"},{"id":"a1-tool-toolu_demo_20","parentId":"agent-1","kind":"tool","name":"Grep","start":1776159702300,"end":1776159702700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_20","tool.category":"read","tool.phase":"explore","tool.summary":"src","tool.requested_by":"a1-llm-msg_demo_15"},"input":{"pattern":"x-client","path":"src"},"output":"src/middleware/auth.ts:9"},{"id":"a1-llm-msg_demo_16","parentId":"agent-1","kind":"llm","name":"claude-opus-demo","start":1776159702700,"end":1776159714700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":42380,"llm.tokens.cache_write":896,"llm.tokens.context":43280,"llm.tokens.output":2280,"llm.tokens.thinking":2100,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1}},{"id":"a1-tool-toolu_demo_21","parentId":"agent-1","kind":"tool","name":"Read","start":1776159714700,"end":1776159714900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_21","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/middleware/auth.ts","tool.requested_by":"a1-llm-msg_demo_16"},"input":{"file_path":"/home/dev/shop-api/src/middleware/auth.ts"},"output":"…"},{"id":"a1-llm-msg_demo_17","parentId":"agent-1","kind":"llm","name":"claude-opus-demo","start":1776159714900,"end":1776159723900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":43960,"llm.tokens.cache_write":896,"llm.tokens.context":44860,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"One issue: unauthenticated requests share the \"anonymous\" bucket, so one noisy caller can block everyone. Key those by IP instead."},{"id":"llm-msg_demo_18","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159724400,"end":1776159730400,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":45540,"llm.tokens.cache_write":896,"llm.tokens.context":46440,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_22","parentId":"turn-2","kind":"tool","name":"Edit","start":1776159730400,"end":1776159730600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_22","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_18"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","old_string":"req.clientId ?? \"anonymous\"","new_string":"req.clientId ?? `ip:${req.ip}`"},"output":"Updated"},{"id":"llm-msg_demo_19","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159730600,"end":1776159733600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":47120,"llm.tokens.cache_write":896,"llm.tokens.context":48020,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_23","parentId":"turn-2","kind":"tool","name":"Bash","start":1776159733600,"end":1776159780600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_23","tool.category":"exec","tool.phase":"verify","tool.summary":"Lint and test","tool.requested_by":"llm-msg_demo_19"},"input":{"command":"npm run lint && npm test","description":"Lint and test"},"output":"Tests: 46 passed"},{"id":"llm-msg_demo_20","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159780600,"end":1776159784600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":48700,"llm.tokens.cache_write":896,"llm.tokens.context":49600,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"Fixed the shared anonymous bucket; lint and tests pass."},{"id":"turn-3","parentId":"session","kind":"turn","name":"looks good, open a PR","start":1776159964600,"end":1776159987200,"status":"ok","attrs":{"turn.index":3},"input":"looks good, open a PR"},{"id":"llm-msg_demo_21","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159964600,"end":1776159967600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":50280,"llm.tokens.cache_write":896,"llm.tokens.context":51180,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_24","parentId":"turn-3","kind":"tool","name":"Bash","start":1776159967600,"end":1776159967900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_24","tool.category":"exec","tool.phase":"explore","tool.summary":"Show changes","tool.requested_by":"llm-msg_demo_21"},"input":{"command":"git status --short","description":"Show changes"},"output":" M src/app.ts\n M src/config.ts\n?? src/middleware/rateLimit.ts"},{"id":"llm-msg_demo_22","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159967900,"end":1776159971900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":51860,"llm.tokens.cache_write":896,"llm.tokens.context":52760,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_25","parentId":"turn-3","kind":"tool","name":"Bash","start":1776159971900,"end":1776159973000,"status":"ok","attrs":{"tool.call_id":"toolu_demo_25","tool.category":"exec","tool.phase":"build","tool.summary":"Commit","tool.requested_by":"llm-msg_demo_22"},"input":{"command":"git add -A && git commit -m \"Add per-client rate limiting\"","description":"Commit"},"output":"[feature/rate-limit 3f2c1aa] Add per-client rate limiting"},{"id":"llm-msg_demo_23","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159973000,"end":1776159975000,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":53440,"llm.tokens.cache_write":896,"llm.tokens.context":54340,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_26","parentId":"turn-3","kind":"tool","name":"Bash","start":1776159975000,"end":1776159977400,"status":"ok","attrs":{"tool.call_id":"toolu_demo_26","tool.category":"exec","tool.phase":"build","tool.summary":"Push branch","tool.requested_by":"llm-msg_demo_23"},"input":{"command":"git push -u origin feature/rate-limit","description":"Push branch"},"output":"branch set up to track origin/feature/rate-limit"},{"id":"llm-msg_demo_24","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159977400,"end":1776159982400,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":55020,"llm.tokens.cache_write":896,"llm.tokens.context":55920,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_27","parentId":"turn-3","kind":"tool","name":"mcp__github__create_pull_request","start":1776159982400,"end":1776159984200,"status":"ok","attrs":{"tool.call_id":"toolu_demo_27","tool.category":"mcp","tool.phase":null,"tool.summary":"Add per-client rate limiting","tool.requested_by":"llm-msg_demo_24"},"input":{"title":"Add per-client rate limiting","base":"main","head":"feature/rate-limit"},"output":"Created PR #128"},{"id":"llm-msg_demo_25","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159984200,"end":1776159987200,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":56600,"llm.tokens.cache_write":896,"llm.tokens.context":57500,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"Opened PR #128."}],"events":[{"time":1776158031700,"kind":"interjection","label":"also return an X-RateLimit-Remaining header please","spanId":"turn-1","detail":"also return an X-RateLimit-Remaining header please"}],"meta":{"sessionId":"7d3c1f0e-5a2b-4c8d-9e6f-0a1b2c3d4e5f","cwd":"/home/dev/shop-api","gitBranch":"feature/rate-limit","version":"2.1.0","entrypoint":"cli","skippedLines":0,"models":["claude-opus-demo"]}}]}</script>
+<script type="application/json" id="agent-trace-data">{"generator":"agent-trace 0.2.0","generatedAt":"2026-10-03T17:18:57.108Z","traces":[{"schema":1,"id":"7d3c1f0e-5a2b-4c8d-9e6f-0a1b2c3d4e5f","title":"Add rate limiting to the orders API","source":"claude-code","start":1776157920000,"end":1776160014600,"spans":[{"id":"session","parentId":null,"kind":"session","name":"Add rate limiting to the orders API","start":1776157920000,"end":1776160014600,"status":"ok","attrs":{}},{"id":"turn-1","parentId":"session","kind":"turn","name":"Add per-client rate limiting to the orders API (100 req/min) and make sure the …","start":1776157920000,"end":1776158135300,"status":"ok","attrs":{"turn.index":1},"input":"Add per-client rate limiting to the orders API (100 req/min) and make sure the tests pass."},{"id":"llm-msg_demo_1","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157920000,"end":1776157926000,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":18680,"llm.tokens.cache_write":896,"llm.tokens.context":19580,"llm.tokens.output":2080,"llm.tokens.thinking":1900,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":2}},{"id":"tool-toolu_demo_1","parentId":"turn-1","kind":"tool","name":"Glob","start":1776157926000,"end":1776157926400,"status":"ok","attrs":{"tool.call_id":"toolu_demo_1","tool.category":"read","tool.phase":"explore","tool.summary":"src/**/*.ts","tool.requested_by":"llm-msg_demo_1"},"input":{"pattern":"src/**/*.ts"},"output":"src/app.ts\nsrc/routes/orders.ts\nsrc/middleware/auth.ts\nsrc/config.ts"},{"id":"tool-toolu_demo_2","parentId":"turn-1","kind":"tool","name":"Grep","start":1776157926000,"end":1776157926600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_2","tool.category":"read","tool.phase":"explore","tool.summary":"src","tool.requested_by":"llm-msg_demo_1"},"input":{"pattern":"app.use\\(","path":"src"},"output":"src/app.ts:14: app.use(auth())\nsrc/app.ts:15: app.use(json())"},{"id":"llm-msg_demo_2","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157926600,"end":1776157929600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":20260,"llm.tokens.cache_write":896,"llm.tokens.context":21160,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":3}},{"id":"tool-toolu_demo_3","parentId":"turn-1","kind":"tool","name":"Read","start":1776157929600,"end":1776157929800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_3","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/app.ts","tool.requested_by":"llm-msg_demo_2"},"input":{"file_path":"/home/dev/shop-api/src/app.ts"},"output":"import express from \"express\";\n…"},{"id":"tool-toolu_demo_4","parentId":"turn-1","kind":"tool","name":"Read","start":1776157929600,"end":1776157929800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_4","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/middleware/auth.ts","tool.requested_by":"llm-msg_demo_2"},"input":{"file_path":"/home/dev/shop-api/src/middleware/auth.ts"},"output":"export function auth() { … }"},{"id":"tool-toolu_demo_5","parentId":"turn-1","kind":"tool","name":"Read","start":1776157929600,"end":1776157929800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_5","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/config.ts","tool.requested_by":"llm-msg_demo_2"},"input":{"file_path":"/home/dev/shop-api/src/config.ts"},"output":"export const config = { port: 8080 };"},{"id":"llm-msg_demo_3","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157929800,"end":1776157943800,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":21840,"llm.tokens.cache_write":896,"llm.tokens.context":22740,"llm.tokens.output":2780,"llm.tokens.thinking":2600,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1},"output":"I'll add a token-bucket middleware keyed by API client, wire it into the app, and make the limit configurable."},{"id":"tool-toolu_demo_6","parentId":"turn-1","kind":"tool","name":"Write","start":1776157943800,"end":1776157944100,"status":"ok","attrs":{"tool.call_id":"toolu_demo_6","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_3"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","content":"export function rateLimit(opts) { … }"},"output":"File created"},{"id":"llm-msg_demo_4","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157944100,"end":1776157949100,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":23420,"llm.tokens.cache_write":896,"llm.tokens.context":24320,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":2}},{"id":"tool-toolu_demo_7","parentId":"turn-1","kind":"tool","name":"Edit","start":1776157949100,"end":1776157949300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_7","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/app.ts","tool.requested_by":"llm-msg_demo_4"},"input":{"file_path":"/home/dev/shop-api/src/app.ts","old_string":"app.use(auth())","new_string":"app.use(auth())\napp.use(rateLimit(config.rateLimit))"},"output":"Updated"},{"id":"tool-toolu_demo_8","parentId":"turn-1","kind":"tool","name":"Edit","start":1776157949100,"end":1776157949300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_8","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/config.ts","tool.requested_by":"llm-msg_demo_4"},"input":{"file_path":"/home/dev/shop-api/src/config.ts","old_string":"port: 8080","new_string":"port: 8080, rateLimit: { perMinute: 100 }"},"output":"Updated"},{"id":"llm-msg_demo_5","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157949300,"end":1776157952300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":25000,"llm.tokens.cache_write":896,"llm.tokens.context":25900,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_9","parentId":"turn-1","kind":"tool","name":"Bash","start":1776157952300,"end":1776157990300,"status":"error","attrs":{"tool.call_id":"toolu_demo_9","tool.category":"exec","tool.phase":"verify","tool.summary":"Run the test suite","tool.requested_by":"llm-msg_demo_5","error.message":"FAIL tests/orders.test.ts ✕ lists orders (429 Too Many Requests) ✕ creates an order (429 Too Many Requests) at Object.\u003canonymous> (tests/orders.test.ts:42:7) at processTicksAndRejections (node:intern…"},"input":{"command":"npm test","description":"Run the test suite"},"output":"FAIL tests/orders.test.ts\n  ✕ lists orders (429 Too Many Requests)\n  ✕ creates an order (429 Too Many Requests)\n\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at Object.\u003canonymous> (tests/orders.test.ts:42:7)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n\nTests: 2 failed, 41 passed"},{"id":"llm-msg_demo_6","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776157990300,"end":1776158021300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":26580,"llm.tokens.cache_write":896,"llm.tokens.context":27480,"llm.tokens.output":6580,"llm.tokens.thinking":6400,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1},"output":"The tests share one client id, so the limiter trips across tests. The bucket should reset between tests and the test client needs a higher limit."},{"id":"tool-toolu_demo_10","parentId":"turn-1","kind":"tool","name":"Read","start":1776158021300,"end":1776158021500,"status":"ok","attrs":{"tool.call_id":"toolu_demo_10","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/tests/helpers.ts","tool.requested_by":"llm-msg_demo_6"},"input":{"file_path":"/home/dev/shop-api/tests/helpers.ts"},"output":"export const client = request(app).set(\"x-client\", \"test\")"},{"id":"llm-msg_demo_7","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158021500,"end":1776158027500,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":28160,"llm.tokens.cache_write":896,"llm.tokens.context":29060,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":2}},{"id":"tool-toolu_demo_11","parentId":"turn-1","kind":"tool","name":"Edit","start":1776158027500,"end":1776158027700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_11","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_7"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","old_string":"const buckets = new Map()","new_string":"export const buckets = new Map()"},"output":"Updated"},{"id":"tool-toolu_demo_12","parentId":"turn-1","kind":"tool","name":"Edit","start":1776158027500,"end":1776158027700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_12","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/tests/helpers.ts","tool.requested_by":"llm-msg_demo_7"},"input":{"file_path":"/home/dev/shop-api/tests/helpers.ts","old_string":"export const client","new_string":"afterEach(() => buckets.clear());\nexport const client"},"output":"Updated"},{"id":"llm-msg_demo_8","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158031700,"end":1776158035700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":29740,"llm.tokens.cache_write":896,"llm.tokens.context":30640,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_13","parentId":"turn-1","kind":"tool","name":"Bash","start":1776158035700,"end":1776158071700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_13","tool.category":"exec","tool.phase":"verify","tool.summary":"Run the test suite","tool.requested_by":"llm-msg_demo_8"},"input":{"command":"npm test","description":"Run the test suite"},"output":"Tests: 43 passed"},{"id":"llm-msg_demo_9","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158071700,"end":1776158078700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":31320,"llm.tokens.cache_write":896,"llm.tokens.context":32220,"llm.tokens.output":1080,"llm.tokens.thinking":900,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1}},{"id":"tool-toolu_demo_14","parentId":"turn-1","kind":"tool","name":"Edit","start":1776158078700,"end":1776158078900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_14","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_9"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","old_string":"next()","new_string":"res.setHeader(\"X-RateLimit-Remaining\", String(bucket.tokens));\nnext()"},"output":"Updated"},{"id":"llm-msg_demo_10","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158078900,"end":1776158083900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":32900,"llm.tokens.cache_write":896,"llm.tokens.context":33800,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_15","parentId":"turn-1","kind":"tool","name":"Write","start":1776158083900,"end":1776158084200,"status":"ok","attrs":{"tool.call_id":"toolu_demo_15","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/tests/rateLimit.test.ts","tool.requested_by":"llm-msg_demo_10"},"input":{"file_path":"/home/dev/shop-api/tests/rateLimit.test.ts","content":"it(\"returns 429 after the limit\", …)"},"output":"File created"},{"id":"llm-msg_demo_11","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158084200,"end":1776158087200,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":34480,"llm.tokens.cache_write":896,"llm.tokens.context":35380,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_16","parentId":"turn-1","kind":"tool","name":"Bash","start":1776158087200,"end":1776158128200,"status":"ok","attrs":{"tool.call_id":"toolu_demo_16","tool.category":"exec","tool.phase":"verify","tool.summary":"Run the test suite","tool.requested_by":"llm-msg_demo_11"},"input":{"command":"npm test","description":"Run the test suite"},"output":"Tests: 46 passed"},{"id":"llm-msg_demo_12","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158128200,"end":1776158130200,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":36060,"llm.tokens.cache_write":896,"llm.tokens.context":36960,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_17","parentId":"turn-1","kind":"tool","name":"mcp__ccd_session__mark_chapter","start":1776158130200,"end":1776158130300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_17","tool.category":"mcp","tool.phase":null,"tool.summary":"Rate limiting works","tool.requested_by":"llm-msg_demo_12"},"input":{"title":"Rate limiting works","summary":"Middleware, config, header, tests"},"output":"Chapter marked"},{"id":"llm-msg_demo_13","parentId":"turn-1","kind":"llm","name":"claude-opus-demo","start":1776158130300,"end":1776158135300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":37640,"llm.tokens.cache_write":896,"llm.tokens.context":38540,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"Rate limiting is in: 100 requests/minute per client, configurable, with an X-RateLimit-Remaining header. All 46 tests pass."},{"id":"turn-2","parentId":"session","kind":"turn","name":"/review src/middleware","start":1776159695300,"end":1776159784600,"status":"ok","attrs":{"turn.index":2},"input":"\u003ccommand-message>review\u003c/command-message>\n\u003ccommand-name>/review\u003c/command-name>\n\u003ccommand-args>src/middleware\u003c/command-args>"},{"id":"llm-msg_demo_14","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159695300,"end":1776159699300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":39220,"llm.tokens.cache_write":896,"llm.tokens.context":40120,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"agent-1","parentId":"tool-toolu_demo_18","kind":"agent","name":"Review rate limit middleware","start":1776159699300,"end":1776159723900,"status":"ok","attrs":{"agent.id":"review-1"}},{"id":"a1-llm-msg_demo_15","parentId":"agent-1","kind":"llm","name":"claude-opus-demo","start":1776159699300,"end":1776159702300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":40800,"llm.tokens.cache_write":896,"llm.tokens.context":41700,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":2}},{"id":"tool-toolu_demo_18","parentId":"turn-2","kind":"tool","name":"Agent","start":1776159699300,"end":1776159724400,"status":"ok","attrs":{"tool.call_id":"toolu_demo_18","tool.category":"agent","tool.phase":null,"tool.summary":"Review rate limit middleware","tool.requested_by":"llm-msg_demo_14"},"input":{"description":"Review rate limit middleware","prompt":"Review src/middleware/rateLimit.ts for correctness and edge cases"},"output":"One issue: unauthenticated requests share one bucket. Key them by IP."},{"id":"a1-tool-toolu_demo_19","parentId":"agent-1","kind":"tool","name":"Read","start":1776159702300,"end":1776159702500,"status":"ok","attrs":{"tool.call_id":"toolu_demo_19","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"a1-llm-msg_demo_15"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts"},"output":"…"},{"id":"a1-tool-toolu_demo_20","parentId":"agent-1","kind":"tool","name":"Grep","start":1776159702300,"end":1776159702700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_20","tool.category":"read","tool.phase":"explore","tool.summary":"src","tool.requested_by":"a1-llm-msg_demo_15"},"input":{"pattern":"x-client","path":"src"},"output":"src/middleware/auth.ts:9"},{"id":"a1-llm-msg_demo_16","parentId":"agent-1","kind":"llm","name":"claude-opus-demo","start":1776159702700,"end":1776159714700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":42380,"llm.tokens.cache_write":896,"llm.tokens.context":43280,"llm.tokens.output":2280,"llm.tokens.thinking":2100,"llm.stop_reason":"tool_use","llm.thinking_blocks":1,"llm.tool_calls":1}},{"id":"a1-tool-toolu_demo_21","parentId":"agent-1","kind":"tool","name":"Read","start":1776159714700,"end":1776159714900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_21","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/src/middleware/auth.ts","tool.requested_by":"a1-llm-msg_demo_16"},"input":{"file_path":"/home/dev/shop-api/src/middleware/auth.ts"},"output":"…"},{"id":"a1-llm-msg_demo_17","parentId":"agent-1","kind":"llm","name":"claude-opus-demo","start":1776159714900,"end":1776159723900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":43960,"llm.tokens.cache_write":896,"llm.tokens.context":44860,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"One issue: unauthenticated requests share the \"anonymous\" bucket, so one noisy caller can block everyone. Key those by IP instead."},{"id":"llm-msg_demo_18","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159724400,"end":1776159730400,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":45540,"llm.tokens.cache_write":896,"llm.tokens.context":46440,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_22","parentId":"turn-2","kind":"tool","name":"Edit","start":1776159730400,"end":1776159730600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_22","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/src/middleware/rateLimit.ts","tool.requested_by":"llm-msg_demo_18"},"input":{"file_path":"/home/dev/shop-api/src/middleware/rateLimit.ts","old_string":"req.clientId ?? \"anonymous\"","new_string":"req.clientId ?? `ip:${req.ip}`"},"output":"Updated"},{"id":"llm-msg_demo_19","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159730600,"end":1776159733600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":47120,"llm.tokens.cache_write":896,"llm.tokens.context":48020,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_23","parentId":"turn-2","kind":"tool","name":"Bash","start":1776159733600,"end":1776159780600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_23","tool.category":"exec","tool.phase":"verify","tool.summary":"Lint and test","tool.requested_by":"llm-msg_demo_19"},"input":{"command":"npm run lint && npm test","description":"Lint and test"},"output":"Tests: 46 passed"},{"id":"llm-msg_demo_20","parentId":"turn-2","kind":"llm","name":"claude-opus-demo","start":1776159780600,"end":1776159784600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":48700,"llm.tokens.cache_write":896,"llm.tokens.context":49600,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"Fixed the shared anonymous bucket; lint and tests pass."},{"id":"turn-3","parentId":"session","kind":"turn","name":"looks good, open a PR","start":1776159964600,"end":1776160014600,"status":"ok","attrs":{"turn.index":3},"input":"looks good, open a PR"},{"id":"llm-msg_demo_21","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159964600,"end":1776159967600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":50280,"llm.tokens.cache_write":896,"llm.tokens.context":51180,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_24","parentId":"turn-3","kind":"tool","name":"Bash","start":1776159967600,"end":1776159967900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_24","tool.category":"exec","tool.phase":"explore","tool.summary":"Show changes","tool.requested_by":"llm-msg_demo_21"},"input":{"command":"git status --short","description":"Show changes"},"output":" M src/app.ts\n M src/config.ts\n?? src/middleware/rateLimit.ts"},{"id":"llm-msg_demo_22","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159967900,"end":1776159971900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":51860,"llm.tokens.cache_write":896,"llm.tokens.context":52760,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_25","parentId":"turn-3","kind":"tool","name":"Read","start":1776159971900,"end":1776159972100,"status":"ok","attrs":{"tool.call_id":"toolu_demo_25","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/package.json","tool.requested_by":"llm-msg_demo_22"},"input":{"file_path":"/home/dev/shop-api/package.json"},"output":"{ \"name\": \"shop-api\", \"version\": \"1.8.0\" }"},{"id":"llm-msg_demo_23","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159972100,"end":1776159977100,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":53440,"llm.tokens.cache_write":896,"llm.tokens.context":54340,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_26","parentId":"turn-3","kind":"tool","name":"Read","start":1776159977100,"end":1776159977300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_26","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/CHANGELOG.md","tool.requested_by":"llm-msg_demo_23"},"input":{"file_path":"/home/dev/shop-api/CHANGELOG.md"},"output":"## 1.8.0\n- Orders pagination"},{"id":"llm-msg_demo_24","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159977300,"end":1776159981300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":55020,"llm.tokens.cache_write":896,"llm.tokens.context":55920,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_27","parentId":"turn-3","kind":"tool","name":"Grep","start":1776159981300,"end":1776159981700,"status":"ok","attrs":{"tool.call_id":"toolu_demo_27","tool.category":"read","tool.phase":"explore","tool.summary":"src","tool.requested_by":"llm-msg_demo_24"},"input":{"pattern":"x-client","path":"src"},"output":"src/middleware/auth.ts:9"},{"id":"llm-msg_demo_25","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159981700,"end":1776159986700,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":56600,"llm.tokens.cache_write":896,"llm.tokens.context":57500,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_28","parentId":"turn-3","kind":"tool","name":"Read","start":1776159986700,"end":1776159986900,"status":"ok","attrs":{"tool.call_id":"toolu_demo_28","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/package.json","tool.requested_by":"llm-msg_demo_25"},"input":{"file_path":"/home/dev/shop-api/package.json"},"output":"{ \"name\": \"shop-api\", \"version\": \"1.8.0\" }"},{"id":"llm-msg_demo_26","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159986900,"end":1776159990900,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":58180,"llm.tokens.cache_write":896,"llm.tokens.context":59080,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_29","parentId":"turn-3","kind":"tool","name":"Read","start":1776159990900,"end":1776159991100,"status":"ok","attrs":{"tool.call_id":"toolu_demo_29","tool.category":"read","tool.phase":"explore","tool.summary":"/home/dev/shop-api/CHANGELOG.md","tool.requested_by":"llm-msg_demo_26"},"input":{"file_path":"/home/dev/shop-api/CHANGELOG.md"},"output":"## 1.8.0\n- Orders pagination"},{"id":"llm-msg_demo_27","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159991100,"end":1776159995100,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":59760,"llm.tokens.cache_write":896,"llm.tokens.context":60660,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_30","parentId":"turn-3","kind":"tool","name":"Edit","start":1776159995100,"end":1776159995300,"status":"ok","attrs":{"tool.call_id":"toolu_demo_30","tool.category":"write","tool.phase":"build","tool.summary":"/home/dev/shop-api/CHANGELOG.md","tool.requested_by":"llm-msg_demo_27"},"input":{"file_path":"/home/dev/shop-api/CHANGELOG.md","old_string":"## 1.8.0","new_string":"## 1.9.0\n- Per-client rate limiting\n\n## 1.8.0"},"output":"Updated"},{"id":"llm-msg_demo_28","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776159995300,"end":1776159999300,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":61340,"llm.tokens.cache_write":896,"llm.tokens.context":62240,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_31","parentId":"turn-3","kind":"tool","name":"Bash","start":1776159999300,"end":1776160000400,"status":"ok","attrs":{"tool.call_id":"toolu_demo_31","tool.category":"exec","tool.phase":"build","tool.summary":"Commit","tool.requested_by":"llm-msg_demo_28"},"input":{"command":"git add -A && git commit -m \"Add per-client rate limiting\"","description":"Commit"},"output":"[feature/rate-limit 3f2c1aa] Add per-client rate limiting"},{"id":"llm-msg_demo_29","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776160000400,"end":1776160002400,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":62920,"llm.tokens.cache_write":896,"llm.tokens.context":63820,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_32","parentId":"turn-3","kind":"tool","name":"Bash","start":1776160002400,"end":1776160004800,"status":"ok","attrs":{"tool.call_id":"toolu_demo_32","tool.category":"exec","tool.phase":"build","tool.summary":"Push branch","tool.requested_by":"llm-msg_demo_29"},"input":{"command":"git push -u origin feature/rate-limit","description":"Push branch"},"output":"branch set up to track origin/feature/rate-limit"},{"id":"llm-msg_demo_30","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776160004800,"end":1776160009800,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":64500,"llm.tokens.cache_write":896,"llm.tokens.context":65400,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"tool_use","llm.tool_calls":1}},{"id":"tool-toolu_demo_33","parentId":"turn-3","kind":"tool","name":"mcp__github__create_pull_request","start":1776160009800,"end":1776160011600,"status":"ok","attrs":{"tool.call_id":"toolu_demo_33","tool.category":"mcp","tool.phase":null,"tool.summary":"Add per-client rate limiting","tool.requested_by":"llm-msg_demo_30"},"input":{"title":"Add per-client rate limiting","base":"main","head":"feature/rate-limit"},"output":"Created PR #128"},{"id":"llm-msg_demo_31","parentId":"turn-3","kind":"llm","name":"claude-opus-demo","start":1776160011600,"end":1776160014600,"status":"ok","attrs":{"llm.model":"claude-opus-demo","llm.tokens.input":4,"llm.tokens.cache_read":66080,"llm.tokens.cache_write":896,"llm.tokens.context":66980,"llm.tokens.output":180,"llm.tokens.thinking":0,"llm.stop_reason":"end_turn"},"output":"Opened PR #128."}],"events":[{"time":1776158031700,"kind":"interjection","label":"also return an X-RateLimit-Remaining header please","spanId":"turn-1","detail":"also return an X-RateLimit-Remaining header please"}],"meta":{"sessionId":"7d3c1f0e-5a2b-4c8d-9e6f-0a1b2c3d4e5f","cwd":"/home/dev/shop-api","gitBranch":"feature/rate-limit","version":"2.1.0","entrypoint":"cli","skippedLines":0,"models":["claude-opus-demo"]}}]}</script>
 <script>(() => {
 'use strict';
 // ---- core/util.mjs ----
@@ -866,6 +996,33 @@ function indexTrace(trace) {
   }
   for (const list of children.values()) list.sort((a, b) => a.start - b.start || kindOrder(a.kind) - kindOrder(b.kind));
   return { byId, children };
+}
+
+const KINDS = new Set(['session', 'turn', 'llm', 'tool', 'agent', 'span']);
+const STATUSES = new Set(['ok', 'error', 'unset']);
+const TOOL_CATEGORIES = new Set(['read', 'write', 'exec', 'web', 'agent', 'mcp', 'meta', 'other']);
+const PHASES = new Set(['explore', 'build', 'verify']);
+
+/**
+ * Force the fields the viewer uses in markup (CSS variables, class names) into known values.
+ * Traces come from files people share; a crafted kind or category must not reach the DOM raw.
+ */
+function sanitizeTrace(trace) {
+  for (const s of trace.spans ?? []) {
+    if (!KINDS.has(s.kind)) s.kind = 'span';
+    if (!STATUSES.has(s.status)) s.status = 'unset';
+    if (typeof s.name !== 'string') s.name = String(s.name ?? s.kind);
+    if (!s.attrs || typeof s.attrs !== 'object' || Array.isArray(s.attrs)) s.attrs = {};
+    const cat = s.attrs['tool.category'];
+    if (cat !== undefined && !TOOL_CATEGORIES.has(cat)) s.attrs['tool.category'] = 'other';
+    const phase = s.attrs['tool.phase'];
+    if (phase != null && !PHASES.has(phase)) s.attrs['tool.phase'] = null;
+  }
+  for (const e of trace.events ?? []) {
+    e.kind = String(e.kind ?? 'event');
+    e.label = String(e.label ?? '');
+  }
+  return trace;
 }
 
 /** Problems that would make a trace unusable in the viewer. Empty array = valid. */
@@ -1546,6 +1703,7 @@ function parseAny(text, options = {}) {
     if (t.schema !== undefined && t.schema > SCHEMA_VERSION) throw new Error(`Trace schema ${t.schema} is newer than this viewer supports (${SCHEMA_VERSION}).`);
     const problems = validateTrace(t);
     if (problems.length) throw new Error(`Invalid trace "${t.title ?? t.id}": ${problems.slice(0, 3).join('; ')}`);
+    sanitizeTrace(t);
   }
   return { adapter: adapter.id, traces };
 }
@@ -1554,6 +1712,7 @@ function parseAny(text, options = {}) {
 // Analysis over a normalized trace: summary statistics and "inflection points", the moments
 // where the agent's course changed. They're inferred from behavior (errors, pivots, heavy
 // thinking, user steering) because raw reasoning text is usually not available.
+
 
 
 
@@ -1753,6 +1912,353 @@ function computeStats(trace) {
   };
 }
 
+/**
+ * Part of a trace, shaped like a trace, for scoped statistics: one span's subtree (rootId),
+ * or everything overlapping a time window [t0, t1] with spans clipped to it.
+ */
+function sliceTrace(trace, { rootId = null, t0 = null, t1 = null } = {}) {
+  if (rootId) {
+    const { byId, children } = indexTrace(trace);
+    const root = byId.get(rootId);
+    if (!root) return { ...trace, spans: [], events: [] };
+    const ids = new Set();
+    const stack = [root];
+    while (stack.length) {
+      const s = stack.pop();
+      ids.add(s.id);
+      stack.push(...(children.get(s.id) ?? []));
+    }
+    return {
+      ...trace,
+      start: root.start,
+      end: root.end,
+      spans: trace.spans.filter((s) => ids.has(s.id)),
+      events: trace.events.filter((e) => (e.spanId && ids.has(e.spanId)) || (!e.spanId && e.time >= root.start && e.time <= root.end)),
+    };
+  }
+  if (t0 != null && t1 != null) {
+    return {
+      ...trace,
+      start: t0,
+      end: t1,
+      spans: trace.spans
+        .filter((s) => s.end >= t0 && s.start <= t1)
+        .map((s) => ({ ...s, start: Math.max(s.start, t0), end: Math.min(s.end, t1) })),
+      events: trace.events.filter((e) => e.time >= t0 && e.time <= t1),
+    };
+  }
+  return trace;
+}
+
+// ---- core/opportunities.mjs ----
+// Opportunities: evidence-backed suggestions for making a session cheaper or faster.
+//
+// Each detector looks for one recognizable pattern and estimates what it cost, so results can
+// be ranked. Estimates are deliberately simple and labelled as such in the UI:
+//   - a model round trip costs the session's median model-call time
+//   - text costs ~4 characters per token
+// Every opportunity carries the span ids that make up its evidence.
+
+
+const CHARS_PER_TOKEN = 4;
+const BIG_OUTPUT_CHARS = 12000; // ~3k tokens
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const OPPORTUNITY_KINDS = {
+  redundant: { label: 'Redundant reads', icon: 'copy' },
+  failures: { label: 'Repeated failures', icon: 'alert' },
+  serial: { label: 'One-at-a-time lookups', icon: 'layers' },
+  bloat: { label: 'Context bloat', icon: 'compress' },
+  cache: { label: 'Cache expired', icon: 'retry' },
+  tests: { label: 'Slow test loop', icon: 'spark' },
+  churn: { label: 'Edit churn', icon: 'pivot' },
+  routine: { label: 'Repeated routine', icon: 'flag' },
+};
+
+const dur = (s) => Math.max(0, s.end - s.start);
+const textLen = (v) => (v == null ? 0 : typeof v === 'string' ? v.length : JSON.stringify(v).length);
+const tokensOf = (chars) => Math.round(chars / CHARS_PER_TOKEN);
+
+function inputOf(span) {
+  const v = span.input;
+  if (v && typeof v === 'object') return v;
+  if (typeof v === 'string' && v.trim().startsWith('{')) {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function callKey(span) {
+  const input = span.input == null ? '' : typeof span.input === 'string' ? span.input : JSON.stringify(span.input);
+  return `${span.name}\u0000${input}`;
+}
+
+function pathOf(span) {
+  const i = inputOf(span);
+  return i?.file_path ?? i?.path ?? i?.notebook_path ?? null;
+}
+
+const isRead = (s) => ['read', 'web'].includes(s.attrs?.['tool.category']);
+const isWrite = (s) => s.attrs?.['tool.category'] === 'write';
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** Same read-only call made again, with no write to the same file in between. */
+function redundantReads(tools, ctx, out) {
+  const seen = new Map();
+  const wasted = [];
+  for (const s of tools) {
+    if (isWrite(s)) {
+      const p = pathOf(s);
+      for (const [k, prev] of seen) if (p && pathOf(prev) === p) seen.delete(k);
+      continue;
+    }
+    if (!isRead(s) || s.status === 'error') continue;
+    const k = callKey(s);
+    if (seen.has(k)) wasted.push(s);
+    else seen.set(k, s);
+  }
+  if (wasted.length < 2) return;
+  const chars = wasted.reduce((n, s) => n + textLen(s.output), 0);
+  const names = [...new Set(wasted.map((s) => s.attrs?.['tool.summary'] || s.name))];
+  out.push({
+    kind: 'redundant',
+    title: `Repeated ${plural(wasted.length, 'lookup')} of content it already had`,
+    detail: `Same input, same result, nothing changed in between: ${names.slice(0, 3).join(', ')}${names.length > 3 ? '…' : ''}.`,
+    action: 'Point the agent at what changed, or ask for targeted reads (search, line ranges) rather than re-reading whole files.',
+    impact: { timeMs: wasted.reduce((n, s) => n + dur(s), 0) + wasted.length * ctx.roundTripMs * 0.5, tokens: tokensOf(chars) },
+    evidence: wasted.map((s) => s.id),
+    confidence: 'high',
+  });
+}
+
+/** The same call failing more than once, plus the general cost of failures. */
+function repeatedFailures(tools, ctx, out) {
+  const failed = tools.filter((s) => s.status === 'error');
+  if (failed.length < 2) return;
+  const byKey = new Map();
+  for (const s of failed) {
+    const k = callKey(s);
+    byKey.set(k, [...(byKey.get(k) ?? []), s]);
+  }
+  const repeats = [...byKey.values()].filter((l) => l.length > 1).flat();
+  const evidence = repeats.length ? repeats : failed;
+  const top = Object.entries(failed.reduce((m, s) => ({ ...m, [s.name]: (m[s.name] ?? 0) + 1 }), {})).sort((a, b) => b[1] - a[1])[0];
+  out.push({
+    kind: 'failures',
+    title: repeats.length
+      ? `The same call failed ${plural(repeats.length, 'time')}`
+      : `${plural(failed.length, 'tool call')} failed (${top[1]}× ${top[0]})`,
+    detail: `Each failure costs the call itself plus a model round trip to react. Most common: ${top[0]}.`,
+    action: repeats.length
+      ? 'Write the fix down where the agent will see it (project instructions / CLAUDE.md): the right command, flags or environment.'
+      : `Check why ${top[0]} keeps failing; a note in the project instructions usually prevents it.`,
+    impact: { timeMs: evidence.reduce((n, s) => n + dur(s), 0) + evidence.length * ctx.roundTripMs, tokens: 0 },
+    evidence: evidence.map((s) => s.id),
+    confidence: repeats.length ? 'high' : 'medium',
+  });
+}
+
+/** Consecutive model calls that each made exactly one independent read: could have been one step. */
+function serialLookups(trace, tools, ctx, out) {
+  const toolsByLlm = new Map();
+  for (const t of tools) {
+    const by = t.attrs?.['tool.requested_by'];
+    if (by) toolsByLlm.set(by, [...(toolsByLlm.get(by) ?? []), t]);
+  }
+  if (!toolsByLlm.size) return;
+  const runs = [];
+  const byParent = new Map();
+  for (const l of trace.spans.filter((s) => s.kind === 'llm')) byParent.set(l.parentId, [...(byParent.get(l.parentId) ?? []), l]);
+  for (const llms of byParent.values()) {
+    let run = [];
+    for (const l of llms.sort((a, b) => a.start - b.start)) {
+      const calls = toolsByLlm.get(l.id) ?? [];
+      if (calls.length === 1 && isRead(calls[0])) run.push(calls[0]);
+      else {
+        if (run.length >= 3) runs.push(run);
+        run = [];
+      }
+    }
+    if (run.length >= 3) runs.push(run);
+  }
+  if (!runs.length) return;
+  const saved = runs.reduce((n, r) => n + (r.length - 1), 0);
+  out.push({
+    kind: 'serial',
+    title: `${plural(runs.reduce((n, r) => n + r.length, 0), 'lookup')} made one at a time`,
+    detail: `${runs.length} stretch${runs.length === 1 ? '' : 'es'} where each model call fetched a single thing before deciding the next. Independent reads can run together in one step.`,
+    action: 'Ask for related files or searches together ("read these together", or list them up front) so they run in parallel.',
+    impact: { timeMs: saved * ctx.roundTripMs, tokens: 0 },
+    evidence: runs.flat().map((s) => s.id),
+    confidence: 'medium',
+  });
+}
+
+/** Big tool outputs: they stay in the context for every later model call. */
+function contextBloat(trace, tools, out) {
+  const big = tools.filter((s) => textLen(s.output) >= BIG_OUTPUT_CHARS);
+  if (!big.length) return;
+  const llms = trace.spans.filter((s) => s.kind === 'llm');
+  let carried = 0;
+  let chars = 0;
+  for (const s of big) {
+    const len = textLen(s.output);
+    chars += len;
+    carried += tokensOf(len) * llms.filter((l) => l.start >= s.end && l.parentId === s.parentId).length;
+  }
+  const truncated = big.some((s) => typeof s.output === 'string' && s.output.includes('more characters truncated]'));
+  out.push({
+    kind: 'bloat',
+    title: `${plural(big.length, 'large tool output')} added ~${Math.round(tokensOf(chars) / 1000)}k tokens${truncated ? '+' : ''}`,
+    detail: `That text stays in the context: later model calls re-read about ${Math.round(carried / 1000)}k tokens of it in total (mostly from cache, but it still crowds the window).`,
+    action: 'Trim noisy commands (tail, grep, --quiet), read line ranges rather than whole files, or summarize long output before continuing.',
+    impact: { timeMs: 0, tokens: tokensOf(chars) },
+    evidence: big.map((s) => s.id),
+    confidence: 'medium',
+  });
+}
+
+/** A long pause, then the next call re-writes a big context to cache. */
+function cacheExpiry(trace, out) {
+  const llms = trace.spans.filter((s) => s.kind === 'llm').sort((a, b) => a.start - b.start);
+  const hits = [];
+  for (let i = 1; i < llms.length; i++) {
+    const gap = llms[i].start - llms[i - 1].end;
+    const written = llms[i].attrs?.['llm.tokens.cache_write'] ?? 0;
+    if (gap > CACHE_TTL_MS && written > 20000) hits.push({ span: llms[i], gap, written });
+  }
+  if (!hits.length) return;
+  const tokens = hits.reduce((n, h) => n + h.written, 0);
+  out.push({
+    kind: 'cache',
+    title: `Context re-processed after ${plural(hits.length, 'break')} (~${Math.round(tokens / 1000)}k tokens)`,
+    detail: `After pauses longer than the cache lifetime, the whole context had to be processed again (longest pause ${Math.round(Math.max(...hits.map((h) => h.gap)) / 60000)} min).`,
+    action: 'For a new task after a break, start a fresh session or compact first; keep long-running sessions moving.',
+    impact: { timeMs: 0, tokens },
+    evidence: hits.map((h) => h.span.id),
+    confidence: 'medium',
+  });
+}
+
+/** Test runs eating a big share of active time. */
+function slowTests(tools, ctx, out) {
+  const tests = tools.filter((s) => s.attrs?.['tool.phase'] === 'verify');
+  if (tests.length < 2) return;
+  const time = tests.reduce((n, s) => n + dur(s), 0);
+  if (time < 60000 || time < ctx.activeMs * 0.3) return;
+  const slowest = tests.reduce((a, b) => (dur(b) > dur(a) ? b : a));
+  out.push({
+    kind: 'tests',
+    title: `Test runs took ${Math.round((time / ctx.activeMs) * 100)}% of active time`,
+    detail: `${plural(tests.length, 'run')}, ${Math.round(time / 1000)}s in total; the slowest took ${Math.round(dur(slowest) / 1000)}s.`,
+    action: 'While iterating, run only the affected tests (a single file or a name filter) and the full suite once at the end.',
+    impact: { timeMs: Math.round(time * 0.5), tokens: 0 },
+    evidence: tests.map((s) => s.id),
+    confidence: 'medium',
+  });
+}
+
+/** Many separate edits to one file within a turn. */
+function editChurn(tools, ctx, out) {
+  const counts = new Map();
+  for (const s of tools) {
+    if (!isWrite(s)) continue;
+    const p = pathOf(s);
+    if (!p) continue;
+    const k = `${s.parentId}\u0000${p}`;
+    counts.set(k, [...(counts.get(k) ?? []), s]);
+  }
+  const churned = [...counts.values()].filter((l) => l.length >= 5);
+  if (!churned.length) return;
+  const worst = churned.sort((a, b) => b.length - a.length)[0];
+  const extra = churned.reduce((n, l) => n + l.length - 1, 0);
+  out.push({
+    kind: 'churn',
+    title: `${pathOf(worst[0]).split(/[\\/]/).pop()} edited ${worst.length} times in one turn`,
+    detail: `${plural(churned.length, 'file')} got five or more separate edits; each edit is its own model round trip.`,
+    action: 'Describe the whole change up front so it lands in fewer, larger edits.',
+    impact: { timeMs: extra * ctx.roundTripMs * 0.5, tokens: 0 },
+    evidence: churned.flat().map((s) => s.id),
+    confidence: 'low',
+  });
+}
+
+/** The same multi-step tool sequence recurring across turns: a script or skill candidate. */
+function repeatedRoutines(tools, ctx, out) {
+  const byTurn = new Map();
+  for (const s of tools) byTurn.set(s.parentId, [...(byTurn.get(s.parentId) ?? []), s]);
+  const seqs = new Map();
+  for (const [turn, list] of byTurn) {
+    const names = list.sort((a, b) => a.start - b.start).map((s) => s.name);
+    const seenHere = new Set();
+    for (let n = 3; n <= 4; n++) {
+      for (let i = 0; i + n <= names.length; i++) {
+        const seq = names.slice(i, i + n);
+        if (new Set(seq).size < 2 || seq.every((x) => list.find((s) => s.name === x && isRead(s)))) continue;
+        const sig = seq.join(' → ');
+        if (seenHere.has(sig)) continue;
+        seenHere.add(sig);
+        const entry = seqs.get(sig) ?? { turns: new Set(), spans: [] };
+        entry.turns.add(turn);
+        entry.spans.push(...list.slice(i, i + n));
+        seqs.set(sig, entry);
+      }
+    }
+  }
+  const best = [...seqs.entries()].filter(([, e]) => e.turns.size >= 3).sort((a, b) => b[1].turns.size - a[1].turns.size || b[0].length - a[0].length)[0];
+  if (!best) return;
+  const [sig, e] = best;
+  const steps = sig.split(' → ').length;
+  out.push({
+    kind: 'routine',
+    title: `Same ${steps}-step routine in ${e.turns.size} turns`,
+    detail: `${sig}. Repeated routines are candidates for a script, slash command or skill that runs them in one go.`,
+    action: 'Capture it as a reusable command or script so the agent (or you) can run it directly.',
+    impact: { timeMs: (e.turns.size - 1) * (steps - 1) * ctx.roundTripMs, tokens: 0 },
+    evidence: [...new Set(e.spans.map((s) => s.id))],
+    confidence: 'low',
+  });
+}
+
+const CONFIDENCE_WEIGHT = { high: 1, medium: 0.8, low: 0.6 };
+
+/** Ranked opportunities for a trace (or a slice of one). */
+function findOpportunities(trace) {
+  const tools = trace.spans.filter((s) => s.kind === 'tool').sort((a, b) => a.start - b.start);
+  const llms = trace.spans.filter((s) => s.kind === 'llm');
+  const active = trace.spans.filter((s) => s.kind === 'llm' || s.kind === 'tool').reduce((n, s) => n + dur(s), 0);
+  const ctx = {
+    roundTripMs: llms.length ? percentile(llms.map(dur), 50) : 0,
+    activeMs: Math.max(1, active),
+  };
+  const out = [];
+  redundantReads(tools, ctx, out);
+  repeatedFailures(tools, ctx, out);
+  serialLookups(trace, tools, ctx, out);
+  contextBloat(trace, tools, out);
+  cacheExpiry(trace, out);
+  slowTests(tools, ctx, out);
+  editChurn(tools, ctx, out);
+  repeatedRoutines(tools, ctx, out);
+  // ~1k tokens weighted like ~15s: both are what a user waits for or pays for.
+  const score = (o) => (o.impact.timeMs + o.impact.tokens * 15) * CONFIDENCE_WEIGHT[o.confidence];
+  return out
+    .map((o) => ({ ...o, impact: { timeMs: Math.round(o.impact.timeMs), tokens: Math.round(o.impact.tokens) } }))
+    .sort((a, b) => score(b) - score(a))
+    .map((o, i) => ({ id: `opp-${i + 1}`, ...o }));
+}
+
+/** Headline numbers for a set of opportunities (overlaps make this an upper bound). */
+function summarizeOpportunities(opps, activeMs) {
+  const timeMs = opps.reduce((n, o) => n + o.impact.timeMs, 0);
+  const tokens = opps.reduce((n, o) => n + o.impact.tokens, 0);
+  return { count: opps.length, timeMs: Math.min(timeMs, activeMs), tokens, share: activeMs ? Math.min(1, timeMs / activeMs) : 0 };
+}
+
 // ---- viewer/format.mjs ----
 // Formatting and DOM helpers for the viewer.
 
@@ -1768,15 +2274,16 @@ function escapeHtml(value) {
 function fmtDuration(ms) {
   if (!Number.isFinite(ms)) return '–';
   if (ms < 1) return '<1ms';
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  const s = ms / 1000;
-  if (s < 10) return `${s.toFixed(1)}s`;
-  if (s < 60) return `${Math.round(s)}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ${String(Math.round(s % 60)).padStart(2, '0')}s`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${String(m % 60).padStart(2, '0')}m`;
-  return `${Math.floor(h / 24)}d ${h % 24}h`;
+  if (ms < 999.5) return `${Math.round(ms)}ms`;
+  if (ms < 9950) return `${(ms / 1000).toFixed(1)}s`;
+  // Round once at the displayed precision, then split, so 299.6s reads "5m 00s", not "4m 60s".
+  const sec = Math.round(ms / 1000);
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ${String(sec % 60).padStart(2, '0')}s`;
+  const min = Math.round(sec / 60);
+  if (min < 24 * 60) return `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
+  const hours = Math.round(min / 60);
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 }
 
 function fmtTokens(n) {
@@ -1875,6 +2382,7 @@ const ICON_PATHS = {
   retry: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   compress: '<path d="M4 12h16"/><path d="m9 7 3-3 3 3M9 17l3 3 3-3"/>',
   copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  sort: '<path d="M7 4v16"/><path d="m3 16 4 4 4-4"/><path d="M14 6h7M14 12h5M14 18h3"/>',
   layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
 };
 
@@ -1920,6 +2428,7 @@ function createStore(initial) {
 
 /** Everything derived from a trace once, up front, so rendering stays cheap. */
 function prepareTrace(trace) {
+  sanitizeTrace(trace); // embedded data skips parseAny, so sanitize here too
   const { byId, children } = indexTrace(trace);
   const inflections = findInflections(trace);
   const stats = computeStats(trace);
@@ -2734,6 +3243,15 @@ function createTimeline({ canvas, overview, tooltip, store, onSelect }) {
     requestDraw();
   });
 
+  function zoomToRange(t0, t1) {
+    const { scale } = store.get();
+    if (!scale) return;
+    const a = scale.toV(t0);
+    const b = scale.toV(t1);
+    const pad = Math.max(b - a, 400) * 0.08;
+    setView(a - pad, Math.max(b, a + 400) + pad, true);
+  }
+
   function zoomBy(factor) {
     const { view } = store.get();
     if (!view) return;
@@ -2745,6 +3263,7 @@ function createTimeline({ canvas, overview, tooltip, store, onSelect }) {
   return {
     fit,
     zoomBy,
+    zoomToRange,
     zoomToSpan,
     reveal,
     refreshPalette() {
@@ -2772,8 +3291,11 @@ function kindColorVar(s) {
   return `var(--cat-${s.attrs?.['tool.category'] ?? 'other'})`;
 }
 
-/** Rows to show: depth-first, honouring collapsed nodes and the active filter. */
-function flattenRows(prepared, collapsed, matchIds) {
+/**
+ * Rows to show: depth-first, honouring collapsed nodes and the active filter.
+ * order 'desc' lists siblings newest first at every level (parents still precede children).
+ */
+function flattenRows(prepared, collapsed, matchIds, order = 'asc') {
   const rows = [];
   const keep = matchIds ? new Set() : null;
   if (matchIds) {
@@ -2787,7 +3309,8 @@ function flattenRows(prepared, collapsed, matchIds) {
     }
   }
   const visit = (parentKey, depth) => {
-    for (const s of prepared.children.get(parentKey) ?? []) {
+    const siblings = prepared.children.get(parentKey) ?? [];
+    for (const s of order === 'desc' ? [...siblings].reverse() : siblings) {
       if (keep && !keep.has(s.id)) continue;
       const kids = prepared.children.get(s.id) ?? [];
       const isRoot = s.kind === 'session' && parentKey === null;
@@ -2815,8 +3338,8 @@ function createTree({ root, store, onSelect, onActivate }) {
   let frame = 0;
 
   function rebuild() {
-    const { prepared, collapsed, matchIds } = store.get();
-    rows = prepared ? flattenRows(prepared, collapsed, matchIds) : [];
+    const { prepared, collapsed, matchIds, treeOrder } = store.get();
+    rows = prepared ? flattenRows(prepared, collapsed, matchIds, treeOrder) : [];
     rowIndex = new Map(rows.map((r, i) => [r.span.id, i]));
     spacer.style.height = `${rows.length * ROW_H}px`;
     empty.hidden = rows.length > 0 || !prepared;
@@ -2969,6 +3492,13 @@ function createTree({ root, store, onSelect, onActivate }) {
   new ResizeObserver(requestRender).observe(viewport);
 
   store.subscribe((state, changed) => {
+    if (changed.has('treeOrder')) {
+      rebuild();
+      // keep the user's place: the selected row stays in view, otherwise start at the top
+      if (state.selectedId && rowIndex.has(state.selectedId)) scrollToId(state.selectedId);
+      else viewport.scrollTop = 0;
+      return;
+    }
     if (changed.has('prepared') || changed.has('collapsed') || changed.has('matchIds') || changed.has('scale')) rebuild();
     else if (changed.has('selectedId') || changed.has('theme')) requestRender();
     if (changed.has('selectedId') && state.selectedId) scrollToId(state.selectedId);
@@ -3148,46 +3678,162 @@ function renderDetails(prepared, spanId) {
   return { html, blocks };
 }
 
-function renderInsights(prepared, groupFilter = 'all') {
-  const st = prepared.stats;
-  const t = st.tokens;
-  const card = (label, value, sub = '', cls = '') => `<div class="card ${cls}"><span class="card-label">${label}</span><b class="card-value">${value}</b>${sub ? `<span class="card-sub">${sub}</span>` : ''}</div>`;
-  const activePct = st.wallTime ? Math.round((st.activeTime / st.wallTime) * 100) : 0;
-  const groups = [['all', 'All'], ['error', 'Errors'], ['pivot', 'Pivots'], ['thinking', 'Thinking'], ['user', 'User'], ['milestone', 'Milestones']];
+// ---- viewer/insights.mjs ----
+// Insights panel: scoped stats, opportunities (actionable savings), story, moments, hot spots.
+
+
+
+
+
+const STORY_MAX = 40;
+const MOMENT_GROUPS = [['all', 'All'], ['error', 'Errors'], ['pivot', 'Pivots'], ['thinking', 'Thinking'], ['user', 'User'], ['milestone', 'Milestones']];
+
+function scopeBar(scope) {
+  const seg = (mode, label) => `<button class="seg-btn" role="radio" aria-checked="${scope.mode === mode}" data-scope="${mode}">${label}</button>`;
+  return `<div class="scope-bar">
+    <div class="seg" role="radiogroup" aria-label="Insights scope">${seg('auto', 'Selection')}${seg('session', 'Session')}${seg('view', 'Visible range')}</div>
+    <div class="scope-label" title="${escapeHtml(scope.label)}">${escapeHtml(scope.label)}</div>
+  </div>`;
+}
+
+function opportunitiesHtml(opportunities, gains) {
+  if (!opportunities.length) {
+    return '<div class="gains is-clean"><b>No obvious savings here.</b><span>No redundant reads, repeated failures, bloated outputs or slow loops in this scope.</span></div>';
+  }
+  const pills = (o) => [
+    o.impact.timeMs >= 1000 ? `<span class="pill">~${fmtDuration(o.impact.timeMs)}</span>` : '',
+    o.impact.tokens >= 500 ? `<span class="pill">~${fmtTokens(o.impact.tokens)} tokens</span>` : '',
+  ].join('');
+  const headline = [
+    gains.timeMs >= 1000 ? `up to ~${fmtDuration(gains.timeMs)} (${Math.round(gains.share * 100)}% of active time)` : '',
+    gains.tokens >= 500 ? `~${fmtTokens(gains.tokens)} tokens` : '',
+  ].filter(Boolean).join(' and ');
+  const cards = opportunities.map((o) => `<article class="opp conf-${o.confidence}">
+      <div class="opp-icon">${icon(OPPORTUNITY_KINDS[o.kind]?.icon ?? 'spark', 15)}</div>
+      <div class="opp-body">
+        <div class="opp-kind">${escapeHtml(OPPORTUNITY_KINDS[o.kind]?.label ?? o.kind)}<span class="opp-conf">${o.confidence} confidence</span></div>
+        <h4>${escapeHtml(o.title)}</h4>
+        <p class="opp-detail">${escapeHtml(o.detail)}</p>
+        <p class="opp-action"><b>Try:</b> ${escapeHtml(o.action)}</p>
+        <div class="opp-foot">${pills(o)}<button class="btn sm" data-evidence="${o.id}">Show ${o.evidence.length} call${o.evidence.length === 1 ? '' : 's'}</button></div>
+      </div></article>`).join('');
+  return `<div class="gains">
+      <div class="gains-head"><b>${opportunities.length === 1 ? '1 opportunity' : `${opportunities.length} opportunities`}</b>${headline ? `<span>${headline}</span>` : ''}</div>
+      <div class="gains-bar" title="Share of active time that could be saved"><i style="width:${(gains.share * 100).toFixed(1)}%"></i></div>
+    </div>
+    <div class="opp-list">${cards}</div>
+    <p class="note">Estimates: a saved round trip counts as a typical model call in this scope; text counts as ~4 characters per token. Overlapping suggestions can double-count.</p>`;
+}
+
+function timeSplit(st) {
+  const wall = Math.max(1, st.wallTime);
+  const waiting = Math.max(0, wall - st.modelTime - st.toolTime);
+  const total = Math.max(wall, st.modelTime + st.toolTime);
+  const part = (ms, cls, label) => (ms > 0 ? `<i class="${cls}" style="width:${((ms / total) * 100).toFixed(2)}%" title="${label}: ${fmtDuration(ms)}"></i>` : '');
+  return `<section class="d-section"><h3>Where the time went</h3>
+    <div class="split-bar">${part(st.modelTime, 'sp-model', 'Model')}${part(st.toolTime, 'sp-tools', 'Tools')}${part(waiting, 'sp-wait', 'Waiting / idle')}</div>
+    <div class="legend"><span><i class="sp-model"></i>Model <b>${fmtDuration(st.modelTime)}</b></span><span><i class="sp-tools"></i>Tools <b>${fmtDuration(st.toolTime)}</b></span><span><i class="sp-wait"></i>Waiting / idle <b>${fmtDuration(waiting)}</b></span></div>
+  </section>`;
+}
+
+function storyHtml(slice, inflections, sortTime, selectedId) {
+  const items = [
+    ...slice.spans.filter((s) => s.kind === 'llm' && typeof s.output === 'string' && s.output.trim()).map((span) => ({ time: span.start, span })),
+    ...inflections.filter((i) => i.kind !== 'thinking').map((inf) => ({ time: inf.time, inf })),
+  ].sort(sortTime);
+  const body = items.length
+    ? `<ol class="story">${items.slice(0, STORY_MAX).map((item) => {
+      if (item.inf) {
+        const g = INFLECTION_KINDS[item.inf.kind]?.group ?? 'system';
+        return `<li class="story-moment" style="--c: var(--inf-${g})"><button data-inflection="${escapeHtml(item.inf.id)}" data-span="${escapeHtml(item.inf.spanId ?? '')}">${icon(INFLECTION_ICONS[item.inf.kind] ?? 'spark', 13)}<span>${escapeHtml(item.inf.label)}</span><time>${fmtClock(item.time)}</time></button></li>`;
+      }
+      const s = item.span;
+      const text = s.output.replace(/\s+/g, ' ').trim();
+      const thought = s.attrs?.['llm.tokens.thinking'] ? `<span class="story-think">${fmtTokens(s.attrs['llm.tokens.thinking'])} thinking</span>` : '';
+      return `<li class="story-say${s.id === selectedId ? ' is-current' : ''}"><button data-goto="${escapeHtml(s.id)}"><span class="story-text">${escapeHtml(text.length > 220 ? text.slice(0, 219) + '…' : text)}</span><span class="story-meta"><time>${fmtClock(s.start)}</time>${thought}</span></button></li>`;
+    }).join('')}</ol>${items.length > STORY_MAX ? `<p class="note">Showing ${STORY_MAX} of ${items.length}. Narrow the scope to see the rest.</p>` : ''}`
+    : '<p class="note">The agent said nothing in this scope; it only called tools.</p>';
+  return `<section class="d-section"><h3>Story <span class="count">${items.length}</span></h3><p class="note section-note">What the agent said as it went, with the moments in between. Click to inspect.</p>${body}</section>`;
+}
+
+function slowestHtml(slice) {
+  const slowest = slice.spans.filter((s) => s.kind === 'llm' || s.kind === 'tool').sort((a, b) => (b.end - b.start) - (a.end - a.start)).slice(0, 5);
+  if (!slowest.length) return '';
+  const max = Math.max(1, ...slowest.map((s) => s.end - s.start));
+  const rows = slowest.map((s) => {
+    const sub = s.kind === 'tool' ? s.attrs?.['tool.summary'] ?? '' : s.attrs?.['llm.tokens.thinking'] ? `${fmtTokens(s.attrs['llm.tokens.thinking'])} thinking` : '';
+    return `<button class="rank-row" data-goto="${escapeHtml(s.id)}">
+      <span class="dot" style="background:${colorVarFor(s)}"></span>
+      <span class="rank-name">${escapeHtml(s.kind === 'llm' ? 'Model call' : s.name)}<small>${escapeHtml(sub)}</small></span>
+      <span class="bar-cell"><i style="width:${(((s.end - s.start) / max) * 100).toFixed(1)}%;background:${colorVarFor(s)}"></i></span>
+      <span class="rank-val">${fmtDuration(s.end - s.start)}</span></button>`;
+  }).join('');
+  return `<section class="d-section"><h3>Slowest calls</h3><div class="rank">${rows}</div></section>`;
+}
+
+function momentsHtml(inflections, group, sortTime) {
   const counts = {};
-  for (const inf of prepared.inflections) {
+  for (const inf of inflections) {
     const g = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
     counts[g] = (counts[g] ?? 0) + 1;
   }
-  const shown = prepared.inflections.filter((inf) => groupFilter === 'all' || INFLECTION_KINDS[inf.kind]?.group === groupFilter);
+  const shown = inflections.filter((inf) => group === 'all' || INFLECTION_KINDS[inf.kind]?.group === group).sort(sortTime);
+  const chips = MOMENT_GROUPS.map(([g, label]) => `<button class="chip ${group === g ? 'is-on' : ''}" data-inf-group="${g}" ${g !== 'all' ? `style="--c: var(--inf-${g})"` : ''}>${label}${g === 'all' ? '' : ` <span class="chip-n">${counts[g] ?? 0}</span>`}</button>`).join('');
+  return `<section class="d-section">
+    <h3>Moments <span class="count">${inflections.length}</span></h3>
+    <div class="chips" role="group" aria-label="Filter moments">${chips}</div>
+    <div class="inf-list">${shown.length ? shown.map((i) => inflectionItem(i)).join('') : '<p class="note">Nothing in this group.</p>'}</div>
+  </section>`;
+}
+
+function toolsHtml(st) {
+  if (!st.toolCalls) return '';
   const maxCount = Math.max(1, ...st.topTools.map((x) => x.count));
-  const toolRows = st.topTools.slice(0, 12).map((x) => `<tr data-tool="${escapeHtml(x.name)}">
+  const rows = st.topTools.slice(0, 12).map((x) => `<tr data-tool="${escapeHtml(x.name)}">
       <td><span class="dot" style="background:var(--cat-${x.category})"></span>${escapeHtml(x.name)}</td>
       <td class="num"><span class="bar-cell"><i style="width:${((x.count / maxCount) * 100).toFixed(1)}%;background:var(--cat-${x.category})"></i></span>${x.count}</td>
       <td class="num">${fmtDuration(x.time)}</td>
       <td class="num ${x.errors ? 'has-error' : ''}">${x.errors || ''}</td></tr>`).join('');
+  return `<section class="d-section"><h3>Tools</h3>${categoryStack(st.byCategory, st.toolCalls)}
+    <table class="tools-table"><thead><tr><th>Tool</th><th class="num">Calls</th><th class="num">Time</th><th class="num">Errors</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
 
-  return `<div class="insights">
+/**
+ * Insights for a scope: the whole session, one turn/subagent subtree, or a time window.
+ * scope: { mode: 'auto' | 'session' | 'view', label, rootId?, t0?, t1? }
+ * Returns the HTML and the opportunities shown (so "Show calls" can resolve their evidence).
+ */
+function renderInsights(prepared, { scope = { mode: 'session', label: 'Whole session' }, group = 'all', order = 'asc', selectedId = null } = {}) {
+  const slice = sliceTrace(prepared.trace, { rootId: scope.rootId ?? null, t0: scope.t0 ?? null, t1: scope.t1 ?? null });
+  const st = computeStats(slice);
+  const ids = new Set(slice.spans.map((s) => s.id));
+  const inflections = prepared.inflections.filter((inf) =>
+    scope.rootId ? ids.has(inf.spanId) : scope.t0 != null ? inf.time >= scope.t0 && inf.time <= scope.t1 : true);
+  const opportunities = findOpportunities(slice);
+  const gains = summarizeOpportunities(opportunities, st.activeTime);
+  const sortTime = (a, b) => (order === 'desc' ? b.time - a.time : a.time - b.time);
+  const card = (label, value, sub = '', cls = '') => `<div class="card ${cls}"><span class="card-label">${label}</span><b class="card-value">${value}</b>${sub ? `<span class="card-sub">${sub}</span>` : ''}</div>`;
+  const activePct = st.wallTime ? Math.round((st.activeTime / st.wallTime) * 100) : 0;
+
+  const html = `<div class="insights">
+    ${scopeBar(scope)}
+    <section class="d-section"><h3>Opportunities</h3>${opportunitiesHtml(opportunities, gains)}</section>
     <section class="cards">
-      ${card('Active time', fmtDuration(st.activeTime), `${activePct}% of ${fmtDuration(st.wallTime)} wall time`)}
-      ${card('Model time', fmtDuration(st.modelTime), `${st.llmCalls} calls`)}
-      ${card('Tool time', fmtDuration(st.toolTime), `${st.toolCalls} calls`)}
+      ${card('Active time', fmtDuration(st.activeTime), `${activePct}% of ${fmtDuration(st.wallTime)}`)}
+      ${card('Model calls', st.llmCalls, fmtDuration(st.modelTime))}
+      ${card('Tool calls', st.toolCalls, fmtDuration(st.toolTime))}
       ${card('Errors', st.errors, st.errors ? 'failed tool calls' : 'none', st.errors ? 'has-error' : '')}
-      ${card('Output', fmtTokens(t.output), `${fmtTokens(t.thinking)} thinking`)}
-      ${card('Peak context', fmtTokens(t.peakContext), `${fmtTokens(t.cacheRead)} read from cache`)}
+      ${card('Output', fmtTokens(st.tokens.output), `${fmtTokens(st.tokens.thinking)} thinking`)}
+      ${card('Peak context', fmtTokens(st.tokens.peakContext), `${fmtTokens(st.tokens.cacheRead)} read from cache`)}
     </section>
-    <section class="d-section">
-      <h3>Moments <span class="count">${prepared.inflections.length}</span></h3>
-      <div class="chips" role="group" aria-label="Filter moments">${groups.map(([g, label]) => `<button class="chip ${groupFilter === g ? 'is-on' : ''}" data-inf-group="${g}" ${g !== 'all' ? `style="--c: var(--inf-${g})"` : ''}>${label}${g === 'all' ? '' : ` <span class="chip-n">${counts[g] ?? 0}</span>`}</button>`).join('')}</div>
-      <div class="inf-list">${shown.length ? shown.map((i) => inflectionItem(i)).join('') : '<p class="note">Nothing in this group.</p>'}</div>
-    </section>
-    ${st.toolCalls ? `<section class="d-section">
-      <h3>Tools</h3>
-      ${categoryStack(st.byCategory, st.toolCalls)}
-      <table class="tools-table"><thead><tr><th>Tool</th><th class="num">Calls</th><th class="num">Time</th><th class="num">Errors</th></tr></thead><tbody>${toolRows}</tbody></table>
-    </section>` : ''}
+    ${st.llmCalls + st.toolCalls ? timeSplit(st) : ''}
+    ${storyHtml(slice, inflections, sortTime, selectedId)}
+    ${momentsHtml(inflections, group, sortTime)}
+    ${slowestHtml(slice)}
+    ${toolsHtml(st)}
     ${st.models.length ? `<p class="note">Models: ${st.models.map(escapeHtml).join(', ')}</p>` : ''}
   </div>`;
+  return { html, opportunities, stats: st };
 }
 
 // ---- viewer/app.mjs ----
@@ -3202,8 +3848,13 @@ function renderInsights(prepared, groupFilter = 'all') {
 
 
 
+
 const THEMES = ['system', 'light', 'dark'];
 const LARGE_TRACE = 1500;
+
+function defaultFilters() {
+  return { query: '', off: new Set(), errorsOnly: false, momentsOnly: false, evidence: null };
+}
 
 function startApp() {
   const $ = (id) => document.getElementById(id);
@@ -3220,11 +3871,13 @@ function startApp() {
     hoverId: null,
     collapsed: new Set(),
     matchIds: null,
-    filters: { query: '', off: new Set(), errorsOnly: false, momentsOnly: false },
+    filters: defaultFilters(),
     sideTab: 'insights',
     infGroup: 'all',
     theme: 0,
     compressIdle: storageGet('compressIdle', true),
+    treeOrder: storageGet('treeOrder', 'asc'),
+    insightScope: storageGet('insightScope', 'auto'),
   });
 
   // --- theme ------------------------------------------------------------------------------
@@ -3250,7 +3903,10 @@ function startApp() {
 
   // --- components -------------------------------------------------------------------------
   const select = ({ spanId, inflectionId = null, from = 'timeline' }) => {
-    store.set({ selectedId: spanId ?? null, selectedInflection: inflectionId, sideTab: spanId ? 'details' : store.get().sideTab });
+    // Clicks inside the side panel mean "drill into this"; elsewhere the open tab stays put
+    // (Insights then re-scopes to the selection).
+    const sideTab = spanId && from === 'panel' ? 'details' : store.get().sideTab;
+    store.set({ selectedId: spanId ?? null, selectedInflection: inflectionId, sideTab });
     if (spanId && from !== 'timeline') timeline.reveal(spanId);
   };
   const timeline = createTimeline({ canvas: $('timeline'), overview: $('overview'), tooltip: $('tooltip'), store, onSelect: select });
@@ -3333,8 +3989,12 @@ function startApp() {
     if (!prepared) return;
     const cats = Object.entries(prepared.stats.byCategory).sort((a, b) => b[1].count - a[1].count);
     const chip = (key, label, n, color) =>
-      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}">${escapeHtml(label)}${n != null ? ` <span class="chip-n">${n}</span>` : ''}</button>`;
+      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}" title="Click to show or hide · Shift+click to show only this">${escapeHtml(label)}${n != null ? ` <span class="chip-n">${n}</span>` : ''}</button>`;
+    const evidence = filters.evidence
+      ? `<button class="chip evidence is-on" data-clear-evidence="1" style="--c:var(--accent)" title="Stop highlighting these calls">${escapeHtml(filters.evidence.title)} ${icon('close', 12)}</button><span class="chip-sep"></span>`
+      : '';
     $('filter-chips').innerHTML =
+      evidence +
       chip('llm', 'Model', prepared.stats.llmCalls, 'var(--llm)') +
       cats.map(([c, v]) => chip(c, CATEGORY_LABELS[c] ?? c, v.count, `var(--cat-${c})`)).join('') +
       `<span class="chip-sep"></span>` +
@@ -3346,7 +4006,7 @@ function startApp() {
     const { prepared, filters } = store.get();
     if (!prepared) return;
     const q = filters.query.trim().toLowerCase();
-    const active = q || filters.off.size || filters.errorsOnly || filters.momentsOnly;
+    const active = q || filters.off.size || filters.errorsOnly || filters.momentsOnly || filters.evidence;
     if (!active) {
       store.set({ matchIds: null });
       return;
@@ -3358,6 +4018,7 @@ function startApp() {
       if (filters.errorsOnly && s.status !== 'error') continue;
       if (filters.momentsOnly && !prepared.inflectionsBySpan.has(s.id)) continue;
       if (q && !prepared.textFor(s).includes(q)) continue;
+      if (filters.evidence && !filters.evidence.ids.has(s.id)) continue;
       ids.add(s.id);
     }
     store.set({ matchIds: ids });
@@ -3367,7 +4028,15 @@ function startApp() {
     const b = e.target.closest('button');
     if (!b) return;
     const filters = { ...store.get().filters, off: new Set(store.get().filters.off) };
-    if (b.dataset.filter) {
+    if (b.dataset.clearEvidence) {
+      filters.evidence = null;
+    } else if (b.dataset.filter && e.shiftKey) {
+      // solo: show only this category; shift+click it again to bring everything back
+      const all = ['llm', ...Object.keys(store.get().prepared.stats.byCategory)];
+      const only = b.dataset.filter;
+      const isSolo = all.every((k) => (k === only ? !filters.off.has(k) : filters.off.has(k)));
+      filters.off = isSolo ? new Set() : new Set(all.filter((k) => k !== only));
+    } else if (b.dataset.filter) {
       if (filters.off.has(b.dataset.filter)) filters.off.delete(b.dataset.filter);
       else filters.off.add(b.dataset.filter);
     } else if (b.dataset.toggleFilter) {
@@ -3384,8 +4053,39 @@ function startApp() {
 
   // --- side panel -------------------------------------------------------------------------
   let blocks = [];
+  let opportunities = [];
+  let lastSubject = '';
+
+  /** What Insights should summarize: visible range, the selected turn/subagent, or everything. */
+  function resolveScope() {
+    const { prepared, selectedId, insightScope, view, scale } = store.get();
+    if (insightScope === 'view' && view && scale) {
+      const t0 = Math.max(scale.fromV(view.v0), prepared.trace.start);
+      const t1 = Math.min(scale.fromV(view.v1), prepared.trace.end);
+      return { mode: 'view', t0, t1, label: `Visible range · ${fmtClock(t0)} to ${fmtClock(t1)}` };
+    }
+    if (insightScope === 'auto' && selectedId) {
+      let s = prepared.byId.get(selectedId);
+      while (s && !['turn', 'agent', 'session'].includes(s.kind) && s.parentId) s = prepared.byId.get(s.parentId);
+      if (s && s.kind !== 'session') return { mode: 'auto', rootId: s.id, label: `${s.kind === 'agent' ? 'Subagent' : 'Turn'} · ${s.name}` };
+    }
+    return { mode: insightScope, label: insightScope === 'auto' ? 'Whole session · select a turn or call to narrow it' : 'Whole session' };
+  }
+
+  function showEvidence(oppId) {
+    const opp = opportunities.find((o) => o.id === oppId);
+    const { prepared } = store.get();
+    if (!opp || !prepared) return;
+    store.set({ filters: { ...store.get().filters, evidence: { title: opp.title, ids: new Set(opp.evidence) } } });
+    renderChips();
+    recomputeFilter();
+    const spans = opp.evidence.map((id) => prepared.byId.get(id)).filter(Boolean);
+    if (spans.length) timeline.zoomToRange(Math.min(...spans.map((s) => s.start)), Math.max(...spans.map((s) => s.end)));
+    toast(`Highlighting ${spans.length} call${spans.length === 1 ? '' : 's'}. Clear it from the chip above the list.`);
+  }
+
   function renderSide() {
-    const { prepared, selectedId, sideTab, infGroup } = store.get();
+    const { prepared, selectedId, sideTab, infGroup, treeOrder } = store.get();
     const body = $('side-body');
     $('tab-details').setAttribute('aria-selected', String(sideTab === 'details'));
     $('tab-insights').setAttribute('aria-selected', String(sideTab === 'insights'));
@@ -3394,7 +4094,9 @@ function startApp() {
       return;
     }
     if (sideTab === 'insights') {
-      body.innerHTML = renderInsights(prepared, infGroup);
+      const r = renderInsights(prepared, { scope: resolveScope(), group: infGroup, order: treeOrder, selectedId });
+      body.innerHTML = r.html;
+      opportunities = r.opportunities;
       blocks = [];
     } else if (!selectedId) {
       body.innerHTML = `<div class="placeholder">${icon('layers', 28)}<p>Select a span in the timeline or the tree to see its inputs, outputs, tokens and timing.</p><p class="note">Tip: <kbd>[</kbd> and <kbd>]</kbd> jump between moments.</p></div>`;
@@ -3404,14 +4106,22 @@ function startApp() {
       body.innerHTML = r.html;
       blocks = r.blocks;
     }
-    body.scrollTop = 0;
+    // keep the reader's place when the same panel just refreshes (e.g. scope follows the timeline)
+    const subject = `${sideTab}|${sideTab === 'details' ? selectedId : ''}`;
+    if (subject !== lastSubject) body.scrollTop = 0;
+    lastSubject = subject;
   }
+  const renderSideSoon = debounce(renderSide, 150);
   $('tab-details').addEventListener('click', () => store.set({ sideTab: 'details' }));
   $('tab-insights').addEventListener('click', () => store.set({ sideTab: 'insights' }));
   $('side-body').addEventListener('click', async (e) => {
     const t = e.target.closest('button, tr[data-tool]');
     if (!t) return;
-    if (t.dataset.goto) select({ spanId: t.dataset.goto, from: 'panel' });
+    if (t.dataset.scope) {
+      storageSet('insightScope', t.dataset.scope);
+      store.set({ insightScope: t.dataset.scope });
+    } else if (t.dataset.evidence) showEvidence(t.dataset.evidence);
+    else if (t.dataset.goto) select({ spanId: t.dataset.goto, from: 'panel' });
     else if (t.dataset.zoom) timeline.zoomToSpan(t.dataset.zoom);
     else if (t.dataset.inflection) {
       const span = t.dataset.span || null;
@@ -3441,7 +4151,9 @@ function startApp() {
   });
 
   store.subscribe((state, changed) => {
-    if (['prepared', 'selectedId', 'sideTab', 'infGroup'].some((k) => changed.has(k))) renderSide();
+    if (['prepared', 'selectedId', 'sideTab', 'infGroup', 'insightScope', 'treeOrder'].some((k) => changed.has(k))) renderSide();
+    else if (changed.has('view') && state.sideTab === 'insights' && state.insightScope === 'view') renderSideSoon();
+    if (changed.has('treeOrder')) renderOrderButton();
   });
 
   // --- moments navigation -----------------------------------------------------------------
@@ -3475,6 +4187,26 @@ function startApp() {
   $('btn-fit').addEventListener('click', () => timeline.fit());
   $('btn-zoom-in').addEventListener('click', () => timeline.zoomBy(0.6));
   $('btn-zoom-out').addEventListener('click', () => timeline.zoomBy(1 / 0.6));
+  function renderOrderButton() {
+    const desc = store.get().treeOrder === 'desc';
+    const b = $('btn-order');
+    b.innerHTML = `${icon('sort', 14)}<span>${desc ? 'Newest first' : 'Oldest first'}</span>`;
+    b.setAttribute('aria-pressed', String(desc));
+  }
+  function toggleOrder() {
+    const next = store.get().treeOrder === 'desc' ? 'asc' : 'desc';
+    storageSet('treeOrder', next);
+    store.set({ treeOrder: next });
+  }
+  function clearAll() {
+    $('search').value = '';
+    store.set({ selectedId: null, selectedInflection: null, filters: defaultFilters() });
+    renderChips();
+    recomputeFilter();
+  }
+  renderOrderButton();
+  $('btn-order').addEventListener('click', toggleOrder);
+  $('btn-clear').addEventListener('click', clearAll);
   $('btn-expand').addEventListener('click', () => tree.expandAll());
   $('btn-collapse').addEventListener('click', () => tree.collapseAll());
   const compress = $('opt-compress');
@@ -3587,6 +4319,8 @@ function startApp() {
       ']': () => stepMoment(1),
       '[': () => stepMoment(-1),
       i: () => store.set({ sideTab: 'insights' }),
+      o: toggleOrder,
+      c: clearAll,
       d: () => store.set({ sideTab: 'details' }),
       j: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' })),
       k: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' })),

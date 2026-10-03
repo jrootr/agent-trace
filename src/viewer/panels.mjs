@@ -8,7 +8,7 @@ const PREVIEW_CHARS = 6000;
 
 const KIND_LABELS = { session: 'Session', turn: 'Turn', llm: 'Model call', tool: 'Tool call', agent: 'Subagent', span: 'Span' };
 
-function colorVarFor(s) {
+export function colorVarFor(s) {
   if (s.kind === 'turn') return 'var(--turn-strong)';
   if (s.kind === 'llm') return 'var(--llm)';
   if (s.kind === 'agent') return 'var(--cat-agent)';
@@ -50,7 +50,7 @@ function tokenBars(a) {
   </div>`;
 }
 
-function inflectionItem(inf, { showTime = true } = {}) {
+export function inflectionItem(inf, { showTime = true } = {}) {
   const group = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
   return `<button class="inf-item" data-inflection="${escapeHtml(inf.id)}" data-span="${escapeHtml(inf.spanId ?? '')}" style="--c: var(--inf-${group})">` +
     `<span class="inf-icon">${icon(INFLECTION_ICONS[inf.kind] ?? 'spark', 14)}</span>` +
@@ -59,7 +59,7 @@ function inflectionItem(inf, { showTime = true } = {}) {
     '</button>';
 }
 
-function categoryStack(byCategory, total) {
+export function categoryStack(byCategory, total) {
   const entries = Object.entries(byCategory).sort((a, b) => b[1].count - a[1].count);
   if (!entries.length) return '';
   return `<div class="stack" role="img" aria-label="Tool calls by category">${entries.map(([c, v]) => `<i style="width:${((v.count / total) * 100).toFixed(2)}%;background:var(--cat-${c})" title="${escapeHtml(CATEGORY_LABELS[c] ?? c)}: ${v.count}"></i>`).join('')}</div>` +
@@ -161,44 +161,3 @@ export function renderDetails(prepared, spanId) {
   return { html, blocks };
 }
 
-export function renderInsights(prepared, groupFilter = 'all') {
-  const st = prepared.stats;
-  const t = st.tokens;
-  const card = (label, value, sub = '', cls = '') => `<div class="card ${cls}"><span class="card-label">${label}</span><b class="card-value">${value}</b>${sub ? `<span class="card-sub">${sub}</span>` : ''}</div>`;
-  const activePct = st.wallTime ? Math.round((st.activeTime / st.wallTime) * 100) : 0;
-  const groups = [['all', 'All'], ['error', 'Errors'], ['pivot', 'Pivots'], ['thinking', 'Thinking'], ['user', 'User'], ['milestone', 'Milestones']];
-  const counts = {};
-  for (const inf of prepared.inflections) {
-    const g = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
-    counts[g] = (counts[g] ?? 0) + 1;
-  }
-  const shown = prepared.inflections.filter((inf) => groupFilter === 'all' || INFLECTION_KINDS[inf.kind]?.group === groupFilter);
-  const maxCount = Math.max(1, ...st.topTools.map((x) => x.count));
-  const toolRows = st.topTools.slice(0, 12).map((x) => `<tr data-tool="${escapeHtml(x.name)}">
-      <td><span class="dot" style="background:var(--cat-${x.category})"></span>${escapeHtml(x.name)}</td>
-      <td class="num"><span class="bar-cell"><i style="width:${((x.count / maxCount) * 100).toFixed(1)}%;background:var(--cat-${x.category})"></i></span>${x.count}</td>
-      <td class="num">${fmtDuration(x.time)}</td>
-      <td class="num ${x.errors ? 'has-error' : ''}">${x.errors || ''}</td></tr>`).join('');
-
-  return `<div class="insights">
-    <section class="cards">
-      ${card('Active time', fmtDuration(st.activeTime), `${activePct}% of ${fmtDuration(st.wallTime)} wall time`)}
-      ${card('Model time', fmtDuration(st.modelTime), `${st.llmCalls} calls`)}
-      ${card('Tool time', fmtDuration(st.toolTime), `${st.toolCalls} calls`)}
-      ${card('Errors', st.errors, st.errors ? 'failed tool calls' : 'none', st.errors ? 'has-error' : '')}
-      ${card('Output', fmtTokens(t.output), `${fmtTokens(t.thinking)} thinking`)}
-      ${card('Peak context', fmtTokens(t.peakContext), `${fmtTokens(t.cacheRead)} read from cache`)}
-    </section>
-    <section class="d-section">
-      <h3>Moments <span class="count">${prepared.inflections.length}</span></h3>
-      <div class="chips" role="group" aria-label="Filter moments">${groups.map(([g, label]) => `<button class="chip ${groupFilter === g ? 'is-on' : ''}" data-inf-group="${g}" ${g !== 'all' ? `style="--c: var(--inf-${g})"` : ''}>${label}${g === 'all' ? '' : ` <span class="chip-n">${counts[g] ?? 0}</span>`}</button>`).join('')}</div>
-      <div class="inf-list">${shown.length ? shown.map((i) => inflectionItem(i)).join('') : '<p class="note">Nothing in this group.</p>'}</div>
-    </section>
-    ${st.toolCalls ? `<section class="d-section">
-      <h3>Tools</h3>
-      ${categoryStack(st.byCategory, st.toolCalls)}
-      <table class="tools-table"><thead><tr><th>Tool</th><th class="num">Calls</th><th class="num">Time</th><th class="num">Errors</th></tr></thead><tbody>${toolRows}</tbody></table>
-    </section>` : ''}
-    ${st.models.length ? `<p class="note">Models: ${st.models.map(escapeHtml).join(', ')}</p>` : ''}
-  </div>`;
-}

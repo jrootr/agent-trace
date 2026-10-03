@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [18, 20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build the standalone viewer
+        run: npm run build
+      - name: dist/ is committed and up to date
+        run: git diff --exit-code -- dist/
+      - name: Test
+        run: npm test
+
+  quality:
+    name: Lint, audit, package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Lint (syntax, hygiene, secrets, manifest)
+        run: npm run lint
+      - name: Audit dependencies
+        run: npm audit --audit-level=low
+      - name: Package contents
+        run: |
+          npm pack --dry-run --json > pack.json
+          node -e '
+            const [p] = require("./pack.json");
+            const files = p.files.map((f) => f.path);
+            const need = ["bin/agent-trace.mjs", "dist/agent-trace.html", "src/index.mjs", "README.md", "LICENSE", "CHANGELOG.md"];
+            const missing = need.filter((f) => !files.includes(f));
+            const stray = files.filter((f) => /^(test|scripts|examples|\.github|\.preview)\//.test(f));
+            console.log(`${p.name}@${p.version}: ${files.length} files, ${(p.size / 1024).toFixed(0)} kB packed`);
+            if (missing.length || stray.length) { console.error({ missing, stray }); process.exit(1); }
+          '
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests with coverage
+        run: npm run coverage | tee coverage.txt
+      - name: Summary
+        run: |
+          echo '### Coverage' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'file +\||all files|\.mjs +\|' coverage.txt | sed -E 's/^(ℹ|#) //' >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

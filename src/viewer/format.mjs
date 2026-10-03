@@ -12,15 +12,16 @@ export function escapeHtml(value) {
 export function fmtDuration(ms) {
   if (!Number.isFinite(ms)) return '–';
   if (ms < 1) return '<1ms';
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  const s = ms / 1000;
-  if (s < 10) return `${s.toFixed(1)}s`;
-  if (s < 60) return `${Math.round(s)}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ${String(Math.round(s % 60)).padStart(2, '0')}s`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${String(m % 60).padStart(2, '0')}m`;
-  return `${Math.floor(h / 24)}d ${h % 24}h`;
+  if (ms < 999.5) return `${Math.round(ms)}ms`;
+  if (ms < 9950) return `${(ms / 1000).toFixed(1)}s`;
+  // Round once at the displayed precision, then split, so 299.6s reads "5m 00s", not "4m 60s".
+  const sec = Math.round(ms / 1000);
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ${String(sec % 60).padStart(2, '0')}s`;
+  const min = Math.round(sec / 60);
+  if (min < 24 * 60) return `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
+  const hours = Math.round(min / 60);
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 }
 
 export function fmtTokens(n) {
@@ -119,6 +120,7 @@ const ICON_PATHS = {
   retry: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   compress: '<path d="M4 12h16"/><path d="m9 7 3-3 3 3M9 17l3 3 3-3"/>',
   copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  sort: '<path d="M7 4v16"/><path d="m3 16 4 4 4-4"/><path d="M14 6h7M14 12h5M14 18h3"/>',
   layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
 };
 

@@ -76,7 +76,11 @@ test('formatting helpers', () => {
   assert.equal(fmtDuration(0.4), '<1ms');
   assert.equal(fmtDuration(950), '950ms');
   assert.equal(fmtDuration(4200), '4.2s');
-  assert.equal(fmtDuration(59_600), '60s');
+  assert.equal(fmtDuration(59_600), '1m 00s');
+  assert.equal(fmtDuration(299_600), '5m 00s', 'no 4m 60s');
+  assert.equal(fmtDuration(9_960), '10s');
+  assert.equal(fmtDuration(3_599_700), '1h 00m');
+  assert.equal(fmtDuration(999.7), '1.0s');
   assert.equal(fmtDuration(61_000), '1m 01s');
   assert.equal(fmtDuration(3_600_000 * 2 + 60_000 * 5), '2h 05m');
   assert.equal(fmtDuration(NaN), '–');
@@ -87,4 +91,39 @@ test('formatting helpers', () => {
   assert.equal(prettyValue('{"a":1}'), '{\n  "a": 1\n}');
   assert.equal(prettyValue('plain'), 'plain');
   assert.equal(prettyValue({ b: 2 }), '{\n  "b": 2\n}');
+});
+
+test('tree rows can be listed newest first at every level', () => {
+  const asc = flattenRows(prepared, new Set(), null, 'asc');
+  const desc = flattenRows(prepared, new Set(), null, 'desc');
+  assert.equal(desc.length, asc.length);
+  assert.equal(desc[0].span.name, '/review src', 'latest turn on top');
+  const turn1 = desc.findIndex((r) => r.span.id === 'turn-1');
+  assert.equal(desc[turn1 + 1].depth, 1, 'children still follow their parent');
+  const kids = desc.filter((r) => r.span.parentId === 'turn-1').map((r) => r.span.start);
+  assert.deepEqual(kids, [...kids].sort((a, b) => b - a), 'children newest first');
+});
+
+test('details panel: model call, failed tool, turn and subagent drill-downs', async () => {
+  const { renderDetails } = await import('../src/viewer/panels.mjs');
+  const llm = renderDetails(prepared, 'llm-msg_A');
+  assert.match(llm.html, /Model call · claude-test-1/);
+  assert.match(llm.html, /class="tok"/, 'token breakdown');
+  assert.match(llm.html, /isn't stored in the transcript/, 'explains missing reasoning text');
+  const bash = trace.spans.find((s) => s.attrs['tool.call_id'] === 't_bash1');
+  const tool = renderDetails(prepared, bash.id);
+  assert.match(tool.html, /Failed/);
+  assert.match(tool.html, /callout is-error/);
+  assert.match(tool.html, /Phase<\/dt><dd>Verifying/);
+  assert.ok(tool.blocks.some((b) => b.includes('npm test')), 'full input kept for copy');
+  assert.match(tool.html, /data-goto="turn-1"/, 'breadcrumb back to the turn');
+  const turn = renderDetails(prepared, 'turn-1');
+  assert.match(turn.html, /Inside this turn/);
+  assert.match(turn.html, /<b>1<\/b><span>errors/);
+  const agent = renderDetails(prepared, trace.spans.find((s) => s.kind === 'agent').id);
+  assert.match(agent.html, /Subagent/);
+  const long = { ...prepared, byId: new Map(prepared.byId) };
+  long.byId.set('big', { id: 'big', kind: 'tool', name: 'Bash', start: T0, end: T0 + 1, status: 'ok', attrs: {}, input: 'x', output: 'y'.repeat(9000), parentId: null });
+  assert.match(renderDetails(long, 'big').html, /Show all 9,000 characters/);
+  assert.equal(renderDetails(prepared, 'missing').html, '');
 });

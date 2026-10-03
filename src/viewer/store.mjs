@@ -1,5 +1,5 @@
 // Tiny observable store. Components subscribe and re-render only for the keys they care about.
-import { indexTrace } from '../core/model.mjs';
+import { indexTrace, sanitizeTrace } from '../core/model.mjs';
 import { findInflections, computeStats } from '../core/analysis.mjs';
 
 export function createStore(initial) {
@@ -22,6 +22,7 @@ export function createStore(initial) {
 
 /** Everything derived from a trace once, up front, so rendering stays cheap. */
 export function prepareTrace(trace) {
+  sanitizeTrace(trace); // embedded data skips parseAny, so sanitize here too
   const { byId, children } = indexTrace(trace);
   const inflections = findInflections(trace);
   const stats = computeStats(trace);

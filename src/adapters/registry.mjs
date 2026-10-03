@@ -2,7 +2,7 @@
 // To support a new agent (e.g. GitHub Copilot hook logs), register { id, label, detect, parse }.
 import { looksLikeClaudeTranscript, parseClaudeTranscript } from './claude-code.mjs';
 import { looksLikeOtlp, fromOtlp } from './otlp.mjs';
-import { validateTrace, SCHEMA_VERSION } from '../core/model.mjs';
+import { validateTrace, sanitizeTrace, SCHEMA_VERSION } from '../core/model.mjs';
 
 const ADAPTERS = [];
 
@@ -56,6 +56,7 @@ export function parseAny(text, options = {}) {
     if (t.schema !== undefined && t.schema > SCHEMA_VERSION) throw new Error(`Trace schema ${t.schema} is newer than this viewer supports (${SCHEMA_VERSION}).`);
     const problems = validateTrace(t);
     if (problems.length) throw new Error(`Invalid trace "${t.title ?? t.id}": ${problems.slice(0, 3).join('; ')}`);
+    sanitizeTrace(t);
   }
   return { adapter: adapter.id, traces };
 }

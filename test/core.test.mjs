@@ -146,3 +146,14 @@ test('registry: detects formats, reports unknown ones, accepts new adapters', ()
   assert.throws(() => registerAdapter({ id: 'bad' }), /missing "detect"/);
   assert.equal(T0 > 0, true);
 });
+
+test('public library API (package entry point)', async () => {
+  const api = await import('../src/index.mjs');
+  for (const name of ['parseAny', 'registerAdapter', 'listAdapters', 'parseClaudeTranscript', 'toOtlp', 'fromOtlp', 'findInflections',
+    'computeStats', 'sliceTrace', 'findOpportunities', 'summarizeOpportunities', 'createTrace', 'addSpan', 'finalizeTrace',
+    'validateTrace', 'sanitizeTrace', 'redactValue', 'buildHtml']) {
+    assert.equal(typeof api[name], 'function', `${name} is exported`);
+  }
+  const { traces: [t] } = api.parseAny(fixtureText());
+  assert.ok(Array.isArray(api.findOpportunities(t)));
+});

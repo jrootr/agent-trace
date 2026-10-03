@@ -3,6 +3,7 @@
 // thinking, user steering) because raw reasoning text is usually not available.
 import { PHASE_LABELS } from './categories.mjs';
 import { percentile } from './util.mjs';
+import { indexTrace } from './model.mjs';
 
 export const INFLECTION_KINDS = {
   recovery: { label: 'Recovered from error', group: 'error' },
@@ -198,4 +199,42 @@ export function computeStats(trace) {
     byCategory,
     topTools: Object.values(byTool).sort((a, b) => b.count - a.count || b.time - a.time),
   };
+}
+
+/**
+ * Part of a trace, shaped like a trace, for scoped statistics: one span's subtree (rootId),
+ * or everything overlapping a time window [t0, t1] with spans clipped to it.
+ */
+export function sliceTrace(trace, { rootId = null, t0 = null, t1 = null } = {}) {
+  if (rootId) {
+    const { byId, children } = indexTrace(trace);
+    const root = byId.get(rootId);
+    if (!root) return { ...trace, spans: [], events: [] };
+    const ids = new Set();
+    const stack = [root];
+    while (stack.length) {
+      const s = stack.pop();
+      ids.add(s.id);
+      stack.push(...(children.get(s.id) ?? []));
+    }
+    return {
+      ...trace,
+      start: root.start,
+      end: root.end,
+      spans: trace.spans.filter((s) => ids.has(s.id)),
+      events: trace.events.filter((e) => (e.spanId && ids.has(e.spanId)) || (!e.spanId && e.time >= root.start && e.time <= root.end)),
+    };
+  }
+  if (t0 != null && t1 != null) {
+    return {
+      ...trace,
+      start: t0,
+      end: t1,
+      spans: trace.spans
+        .filter((s) => s.end >= t0 && s.start <= t1)
+        .map((s) => ({ ...s, start: Math.max(s.start, t0), end: Math.min(s.end, t1) })),
+      events: trace.events.filter((e) => e.time >= t0 && e.time <= t1),
+    };
+  }
+  return trace;
 }

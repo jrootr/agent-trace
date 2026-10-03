@@ -15,8 +15,11 @@ function kindColorVar(s) {
   return `var(--cat-${s.attrs?.['tool.category'] ?? 'other'})`;
 }
 
-/** Rows to show: depth-first, honouring collapsed nodes and the active filter. */
-export function flattenRows(prepared, collapsed, matchIds) {
+/**
+ * Rows to show: depth-first, honouring collapsed nodes and the active filter.
+ * order 'desc' lists siblings newest first at every level (parents still precede children).
+ */
+export function flattenRows(prepared, collapsed, matchIds, order = 'asc') {
   const rows = [];
   const keep = matchIds ? new Set() : null;
   if (matchIds) {
@@ -30,7 +33,8 @@ export function flattenRows(prepared, collapsed, matchIds) {
     }
   }
   const visit = (parentKey, depth) => {
-    for (const s of prepared.children.get(parentKey) ?? []) {
+    const siblings = prepared.children.get(parentKey) ?? [];
+    for (const s of order === 'desc' ? [...siblings].reverse() : siblings) {
       if (keep && !keep.has(s.id)) continue;
       const kids = prepared.children.get(s.id) ?? [];
       const isRoot = s.kind === 'session' && parentKey === null;
@@ -58,8 +62,8 @@ export function createTree({ root, store, onSelect, onActivate }) {
   let frame = 0;
 
   function rebuild() {
-    const { prepared, collapsed, matchIds } = store.get();
-    rows = prepared ? flattenRows(prepared, collapsed, matchIds) : [];
+    const { prepared, collapsed, matchIds, treeOrder } = store.get();
+    rows = prepared ? flattenRows(prepared, collapsed, matchIds, treeOrder) : [];
     rowIndex = new Map(rows.map((r, i) => [r.span.id, i]));
     spacer.style.height = `${rows.length * ROW_H}px`;
     empty.hidden = rows.length > 0 || !prepared;
@@ -212,6 +216,13 @@ export function createTree({ root, store, onSelect, onActivate }) {
   new ResizeObserver(requestRender).observe(viewport);
 
   store.subscribe((state, changed) => {
+    if (changed.has('treeOrder')) {
+      rebuild();
+      // keep the user's place: the selected row stays in view, otherwise start at the top
+      if (state.selectedId && rowIndex.has(state.selectedId)) scrollToId(state.selectedId);
+      else viewport.scrollTop = 0;
+      return;
+    }
     if (changed.has('prepared') || changed.has('collapsed') || changed.has('matchIds') || changed.has('scale')) rebuild();
     else if (changed.has('selectedId') || changed.has('theme')) requestRender();
     if (changed.has('selectedId') && state.selectedId) scrollToId(state.selectedId);

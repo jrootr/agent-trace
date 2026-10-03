@@ -48,3 +48,23 @@ test('dist/agent-trace.html is up to date with the sources', () => {
   const dist = fs.readFileSync(path.join(ROOT, 'dist', 'agent-trace.html'), 'utf8');
   assert.equal(dist, buildHtml(), 'run `npm run build` and commit dist/');
 });
+
+test('release tooling: changelog sections, dated releases, badges; changelog covers this version', async () => {
+  const { changelogSection, releaseChangelog, setBadge } = await import('../scripts/release-tools.mjs');
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
+  assert.match(pkg.version, /^\d+\.\d+\.\d+$/, 'semver');
+  assert.ok(changelogSection(changelog, pkg.version)?.length > 20, `CHANGELOG.md documents ${pkg.version}`);
+
+  const sample = '# C\n\n## [Unreleased]\n\n### Added\n- thing\n\n## [1.0.0] - 2026-01-01\n- old\n\n[Unreleased]: https://x/compare/v1.0.0...HEAD\n[1.0.0]: https://x/releases/tag/v1.0.0\n';
+  const released = releaseChangelog(sample, '1.1.0', '2026-02-02', 'https://x');
+  assert.match(released, /## \[Unreleased\]\n\n## \[1\.1\.0\] - 2026-02-02\n\n### Added\n- thing/);
+  assert.match(released, /\[Unreleased\]: https:\/\/x\/compare\/v1\.1\.0\.\.\.HEAD\n\[1\.1\.0\]: https:\/\/x\/compare\/v1\.0\.0\.\.\.v1\.1\.0/);
+  assert.equal(releaseChangelog(released, '1.1.0', 'later'), released, 'idempotent');
+  assert.equal(changelogSection(released, '1.0.0'), '- old');
+
+  const readme = '![v](https://img.shields.io/badge/version-0.1.0-5b4ff5?style=flat-square) ![t](https://img.shields.io/badge/tests-1%20passing-2ea043)';
+  assert.match(setBadge(readme, 'version', '1.2.3', '5b4ff5'), /badge\/version-1\.2\.3-5b4ff5\?style=flat-square/);
+  assert.match(setBadge(readme, 'tests', '53 passing', '2ea043'), /badge\/tests-53%20passing-2ea043\)/);
+  assert.throws(() => setBadge(readme, 'nope', 'x', 'y'), /no nope badge/);
+});

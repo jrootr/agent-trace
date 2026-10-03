@@ -6,11 +6,16 @@ import { createStore, prepareTrace } from './store.mjs';
 import { buildTimeScale } from './timescale.mjs';
 import { createTimeline } from './timeline.mjs';
 import { createTree } from './tree.mjs';
-import { renderDetails, renderInsights } from './panels.mjs';
+import { renderDetails } from './panels.mjs';
+import { renderInsights } from './insights.mjs';
 import { escapeHtml, fmtDuration, fmtTokens, fmtClock, icon, debounce, storageGet, storageSet } from './format.mjs';
 
 const THEMES = ['system', 'light', 'dark'];
 const LARGE_TRACE = 1500;
+
+function defaultFilters() {
+  return { query: '', off: new Set(), errorsOnly: false, momentsOnly: false, evidence: null };
+}
 
 export function startApp() {
   const $ = (id) => document.getElementById(id);
@@ -27,11 +32,13 @@ export function startApp() {
     hoverId: null,
     collapsed: new Set(),
     matchIds: null,
-    filters: { query: '', off: new Set(), errorsOnly: false, momentsOnly: false },
+    filters: defaultFilters(),
     sideTab: 'insights',
     infGroup: 'all',
     theme: 0,
     compressIdle: storageGet('compressIdle', true),
+    treeOrder: storageGet('treeOrder', 'asc'),
+    insightScope: storageGet('insightScope', 'auto'),
   });
 
   // --- theme ------------------------------------------------------------------------------
@@ -57,7 +64,10 @@ export function startApp() {
 
   // --- components -------------------------------------------------------------------------
   const select = ({ spanId, inflectionId = null, from = 'timeline' }) => {
-    store.set({ selectedId: spanId ?? null, selectedInflection: inflectionId, sideTab: spanId ? 'details' : store.get().sideTab });
+    // Clicks inside the side panel mean "drill into this"; elsewhere the open tab stays put
+    // (Insights then re-scopes to the selection).
+    const sideTab = spanId && from === 'panel' ? 'details' : store.get().sideTab;
+    store.set({ selectedId: spanId ?? null, selectedInflection: inflectionId, sideTab });
     if (spanId && from !== 'timeline') timeline.reveal(spanId);
   };
   const timeline = createTimeline({ canvas: $('timeline'), overview: $('overview'), tooltip: $('tooltip'), store, onSelect: select });
@@ -140,8 +150,12 @@ export function startApp() {
     if (!prepared) return;
     const cats = Object.entries(prepared.stats.byCategory).sort((a, b) => b[1].count - a[1].count);
     const chip = (key, label, n, color) =>
-      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}">${escapeHtml(label)}${n != null ? ` <span class="chip-n">${n}</span>` : ''}</button>`;
+      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}" title="Click to show or hide · Shift+click to show only this">${escapeHtml(label)}${n != null ? ` <span class="chip-n">${n}</span>` : ''}</button>`;
+    const evidence = filters.evidence
+      ? `<button class="chip evidence is-on" data-clear-evidence="1" style="--c:var(--accent)" title="Stop highlighting these calls">${escapeHtml(filters.evidence.title)} ${icon('close', 12)}</button><span class="chip-sep"></span>`
+      : '';
     $('filter-chips').innerHTML =
+      evidence +
       chip('llm', 'Model', prepared.stats.llmCalls, 'var(--llm)') +
       cats.map(([c, v]) => chip(c, CATEGORY_LABELS[c] ?? c, v.count, `var(--cat-${c})`)).join('') +
       `<span class="chip-sep"></span>` +
@@ -153,7 +167,7 @@ export function startApp() {
     const { prepared, filters } = store.get();
     if (!prepared) return;
     const q = filters.query.trim().toLowerCase();
-    const active = q || filters.off.size || filters.errorsOnly || filters.momentsOnly;
+    const active = q || filters.off.size || filters.errorsOnly || filters.momentsOnly || filters.evidence;
     if (!active) {
       store.set({ matchIds: null });
       return;
@@ -165,6 +179,7 @@ export function startApp() {
       if (filters.errorsOnly && s.status !== 'error') continue;
       if (filters.momentsOnly && !prepared.inflectionsBySpan.has(s.id)) continue;
       if (q && !prepared.textFor(s).includes(q)) continue;
+      if (filters.evidence && !filters.evidence.ids.has(s.id)) continue;
       ids.add(s.id);
     }
     store.set({ matchIds: ids });
@@ -174,7 +189,15 @@ export function startApp() {
     const b = e.target.closest('button');
     if (!b) return;
     const filters = { ...store.get().filters, off: new Set(store.get().filters.off) };
-    if (b.dataset.filter) {
+    if (b.dataset.clearEvidence) {
+      filters.evidence = null;
+    } else if (b.dataset.filter && e.shiftKey) {
+      // solo: show only this category; shift+click it again to bring everything back
+      const all = ['llm', ...Object.keys(store.get().prepared.stats.byCategory)];
+      const only = b.dataset.filter;
+      const isSolo = all.every((k) => (k === only ? !filters.off.has(k) : filters.off.has(k)));
+      filters.off = isSolo ? new Set() : new Set(all.filter((k) => k !== only));
+    } else if (b.dataset.filter) {
       if (filters.off.has(b.dataset.filter)) filters.off.delete(b.dataset.filter);
       else filters.off.add(b.dataset.filter);
     } else if (b.dataset.toggleFilter) {
@@ -191,8 +214,39 @@ export function startApp() {
 
   // --- side panel -------------------------------------------------------------------------
   let blocks = [];
+  let opportunities = [];
+  let lastSubject = '';
+
+  /** What Insights should summarize: visible range, the selected turn/subagent, or everything. */
+  function resolveScope() {
+    const { prepared, selectedId, insightScope, view, scale } = store.get();
+    if (insightScope === 'view' && view && scale) {
+      const t0 = Math.max(scale.fromV(view.v0), prepared.trace.start);
+      const t1 = Math.min(scale.fromV(view.v1), prepared.trace.end);
+      return { mode: 'view', t0, t1, label: `Visible range · ${fmtClock(t0)} to ${fmtClock(t1)}` };
+    }
+    if (insightScope === 'auto' && selectedId) {
+      let s = prepared.byId.get(selectedId);
+      while (s && !['turn', 'agent', 'session'].includes(s.kind) && s.parentId) s = prepared.byId.get(s.parentId);
+      if (s && s.kind !== 'session') return { mode: 'auto', rootId: s.id, label: `${s.kind === 'agent' ? 'Subagent' : 'Turn'} · ${s.name}` };
+    }
+    return { mode: insightScope, label: insightScope === 'auto' ? 'Whole session · select a turn or call to narrow it' : 'Whole session' };
+  }
+
+  function showEvidence(oppId) {
+    const opp = opportunities.find((o) => o.id === oppId);
+    const { prepared } = store.get();
+    if (!opp || !prepared) return;
+    store.set({ filters: { ...store.get().filters, evidence: { title: opp.title, ids: new Set(opp.evidence) } } });
+    renderChips();
+    recomputeFilter();
+    const spans = opp.evidence.map((id) => prepared.byId.get(id)).filter(Boolean);
+    if (spans.length) timeline.zoomToRange(Math.min(...spans.map((s) => s.start)), Math.max(...spans.map((s) => s.end)));
+    toast(`Highlighting ${spans.length} call${spans.length === 1 ? '' : 's'}. Clear it from the chip above the list.`);
+  }
+
   function renderSide() {
-    const { prepared, selectedId, sideTab, infGroup } = store.get();
+    const { prepared, selectedId, sideTab, infGroup, treeOrder } = store.get();
     const body = $('side-body');
     $('tab-details').setAttribute('aria-selected', String(sideTab === 'details'));
     $('tab-insights').setAttribute('aria-selected', String(sideTab === 'insights'));
@@ -201,7 +255,9 @@ export function startApp() {
       return;
     }
     if (sideTab === 'insights') {
-      body.innerHTML = renderInsights(prepared, infGroup);
+      const r = renderInsights(prepared, { scope: resolveScope(), group: infGroup, order: treeOrder, selectedId });
+      body.innerHTML = r.html;
+      opportunities = r.opportunities;
       blocks = [];
     } else if (!selectedId) {
       body.innerHTML = `<div class="placeholder">${icon('layers', 28)}<p>Select a span in the timeline or the tree to see its inputs, outputs, tokens and timing.</p><p class="note">Tip: <kbd>[</kbd> and <kbd>]</kbd> jump between moments.</p></div>`;
@@ -211,14 +267,22 @@ export function startApp() {
       body.innerHTML = r.html;
       blocks = r.blocks;
     }
-    body.scrollTop = 0;
+    // keep the reader's place when the same panel just refreshes (e.g. scope follows the timeline)
+    const subject = `${sideTab}|${sideTab === 'details' ? selectedId : ''}`;
+    if (subject !== lastSubject) body.scrollTop = 0;
+    lastSubject = subject;
   }
+  const renderSideSoon = debounce(renderSide, 150);
   $('tab-details').addEventListener('click', () => store.set({ sideTab: 'details' }));
   $('tab-insights').addEventListener('click', () => store.set({ sideTab: 'insights' }));
   $('side-body').addEventListener('click', async (e) => {
     const t = e.target.closest('button, tr[data-tool]');
     if (!t) return;
-    if (t.dataset.goto) select({ spanId: t.dataset.goto, from: 'panel' });
+    if (t.dataset.scope) {
+      storageSet('insightScope', t.dataset.scope);
+      store.set({ insightScope: t.dataset.scope });
+    } else if (t.dataset.evidence) showEvidence(t.dataset.evidence);
+    else if (t.dataset.goto) select({ spanId: t.dataset.goto, from: 'panel' });
     else if (t.dataset.zoom) timeline.zoomToSpan(t.dataset.zoom);
     else if (t.dataset.inflection) {
       const span = t.dataset.span || null;
@@ -248,7 +312,9 @@ export function startApp() {
   });
 
   store.subscribe((state, changed) => {
-    if (['prepared', 'selectedId', 'sideTab', 'infGroup'].some((k) => changed.has(k))) renderSide();
+    if (['prepared', 'selectedId', 'sideTab', 'infGroup', 'insightScope', 'treeOrder'].some((k) => changed.has(k))) renderSide();
+    else if (changed.has('view') && state.sideTab === 'insights' && state.insightScope === 'view') renderSideSoon();
+    if (changed.has('treeOrder')) renderOrderButton();
   });
 
   // --- moments navigation -----------------------------------------------------------------
@@ -282,6 +348,26 @@ export function startApp() {
   $('btn-fit').addEventListener('click', () => timeline.fit());
   $('btn-zoom-in').addEventListener('click', () => timeline.zoomBy(0.6));
   $('btn-zoom-out').addEventListener('click', () => timeline.zoomBy(1 / 0.6));
+  function renderOrderButton() {
+    const desc = store.get().treeOrder === 'desc';
+    const b = $('btn-order');
+    b.innerHTML = `${icon('sort', 14)}<span>${desc ? 'Newest first' : 'Oldest first'}</span>`;
+    b.setAttribute('aria-pressed', String(desc));
+  }
+  function toggleOrder() {
+    const next = store.get().treeOrder === 'desc' ? 'asc' : 'desc';
+    storageSet('treeOrder', next);
+    store.set({ treeOrder: next });
+  }
+  function clearAll() {
+    $('search').value = '';
+    store.set({ selectedId: null, selectedInflection: null, filters: defaultFilters() });
+    renderChips();
+    recomputeFilter();
+  }
+  renderOrderButton();
+  $('btn-order').addEventListener('click', toggleOrder);
+  $('btn-clear').addEventListener('click', clearAll);
   $('btn-expand').addEventListener('click', () => tree.expandAll());
   $('btn-collapse').addEventListener('click', () => tree.collapseAll());
   const compress = $('opt-compress');
@@ -394,6 +480,8 @@ export function startApp() {
       ']': () => stepMoment(1),
       '[': () => stepMoment(-1),
       i: () => store.set({ sideTab: 'insights' }),
+      o: toggleOrder,
+      c: clearAll,
       d: () => store.set({ sideTab: 'details' }),
       j: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' })),
       k: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' })),

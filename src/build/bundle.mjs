@@ -4,6 +4,7 @@
 //   - imports are single-line `import { a, b } from './x.mjs';` of modules earlier in BUNDLE_ORDER
 //   - exports are `export function|const|let|class` declarations
 //   - top-level names are unique across all bundled modules (they share one scope)
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,12 +20,14 @@ export const BUNDLE_ORDER = [
   'adapters/otlp.mjs',
   'adapters/registry.mjs',
   'core/analysis.mjs',
+  'core/opportunities.mjs',
   'viewer/format.mjs',
   'viewer/store.mjs',
   'viewer/timescale.mjs',
   'viewer/timeline.mjs',
   'viewer/tree.mjs',
   'viewer/panels.mjs',
+  'viewer/insights.mjs',
   'viewer/app.mjs',
 ];
 
@@ -66,12 +69,45 @@ export function safeJsonForHtml(data) {
   return json;
 }
 
+const ROOT = path.resolve(SRC, '..');
+
+export function packageVersion() {
+  return JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+}
+
+/**
+ * The report holds other people's data, so lock it down: only our own (hashed) script runs,
+ * and the page can't load or send anything over the network.
+ */
+export function contentSecurityPolicy(script) {
+  const hash = crypto.createHash('sha256').update(script, 'utf8').digest('base64');
+  return [
+    "default-src 'none'",
+    `script-src 'sha256-${hash}'`,
+    "style-src 'unsafe-inline'",
+    'img-src data: blob:',
+    "connect-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ].join('; ');
+}
+
 export function buildHtml({ data = null } = {}) {
   const template = fs.readFileSync(path.join(SRC, 'viewer', 'index.html'), 'utf8');
+  const logo = fs.readFileSync(path.join(ROOT, 'docs', 'logo.svg'), 'utf8').trim();
   const css = fs.readFileSync(path.join(SRC, 'viewer', 'styles.css'), 'utf8');
   const script = bundleScripts().replace(/<\/script/gi, '<\\/script');
-  const parts = { STYLES: css, DATA: safeJsonForHtml(data), SCRIPT: script };
+  const parts = {
+    STYLES: css,
+    DATA: safeJsonForHtml(data),
+    SCRIPT: script,
+    LOGO: logo.replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true" focusable="false"'),
+    FAVICON: `data:image/svg+xml,${encodeURIComponent(logo)}`,
+    VERSION: packageVersion(),
+    CSP: contentSecurityPolicy(script),
+  };
   // One pass over the template only: injected content (a transcript can contain these very
   // placeholder strings) is never rescanned. A function replacer also keeps `$` sequences literal.
-  return template.replace(/\/\*__(STYLES|DATA|SCRIPT)__\*\//g, (_, key) => parts[key]);
+  return template.replace(/\/\*__(STYLES|DATA|SCRIPT|LOGO|FAVICON|VERSION|CSP)__\*\//g, (_, key) => parts[key]);
 }

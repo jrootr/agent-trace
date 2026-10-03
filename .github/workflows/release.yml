@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Tag matches package.json
+        run: |
+          v="$(node -p "require('./package.json').version")"
+          if [ "v$v" != "$GITHUB_REF_NAME" ]; then echo "::error::tag $GITHUB_REF_NAME does not match package.json version $v"; exit 1; fi
+      - name: Build, lint, test
+        run: npm run check
+      - name: Release notes from CHANGELOG.md
+        run: node scripts/release-tools.mjs notes "${GITHUB_REF_NAME#v}" > notes.md
+      - name: Publish GitHub release with the standalone viewer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/agent-trace.html --title "agent-trace $GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+      - name: Publish to npm (when an NPM_TOKEN secret is configured)
+        if: ${{ env.NPM_TOKEN != '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
