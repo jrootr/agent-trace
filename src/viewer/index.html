@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>agent-trace</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236d5efc' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 6h10M8 12h12M6 18h8'/%3E%3Ccircle cx='17' cy='6' r='2'/%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='17' cy='18' r='2'/%3E%3C/svg%3E">
+<style>/*__STYLES__*/</style>
+</head>
+<body>
+<div id="app" class="app" data-state="empty">
+  <header class="topbar">
+    <div class="brand" title="agent-trace">
+      <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      <span>agent-trace</span>
+    </div>
+    <div class="title-wrap">
+      <h1 id="trace-title" class="trace-title">No trace loaded</h1>
+      <div id="trace-meta" class="trace-meta"></div>
+    </div>
+    <select id="trace-picker" class="picker" hidden aria-label="Choose a trace"></select>
+    <div id="stat-chips" class="stat-chips" aria-label="Session summary"></div>
+    <div class="actions">
+      <button id="btn-open" class="btn" type="button"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open</span></button>
+      <div class="menu-wrap">
+        <button id="btn-export" class="btn" type="button" aria-haspopup="menu" aria-expanded="false"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span>Export</span></button>
+        <div id="export-menu" class="menu" role="menu" hidden>
+          <button role="menuitem" type="button" data-export="otlp"><b>OpenTelemetry</b><span>OTLP/JSON with GenAI conventions</span></button>
+          <button role="menuitem" type="button" data-export="trace"><b>agent-trace JSON</b><span>Normalized trace, re-openable here</span></button>
+        </div>
+      </div>
+      <button id="btn-theme" class="icon-btn" type="button"></button>
+      <button id="btn-help" class="icon-btn" type="button" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17h.01"/></svg></button>
+    </div>
+    <input id="file-input" type="file" accept=".jsonl,.json,application/json,application/x-ndjson" hidden>
+  </header>
+
+  <section class="timeline-panel" aria-label="Timeline">
+    <div class="panel-toolbar">
+      <div id="tl-legend" class="legend"></div>
+      <div class="tl-controls">
+        <label class="switch" title="Squeeze long idle stretches so the activity stays readable">
+          <input type="checkbox" id="opt-compress"><span class="switch-track" aria-hidden="true"></span><span>Compress idle</span>
+        </label>
+        <div class="btn-group">
+          <button class="icon-btn" id="btn-zoom-out" type="button" title="Zoom out (-)" aria-label="Zoom out"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <button class="icon-btn" id="btn-zoom-in" type="button" title="Zoom in (+)" aria-label="Zoom in"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="btn sm" id="btn-fit" type="button" title="Fit everything (f)">Fit</button>
+        </div>
+      </div>
+    </div>
+    <div class="timeline-scroll">
+      <canvas id="timeline" class="timeline" tabindex="0" aria-label="Timeline. Scroll to zoom, drag to pan, click a bar to inspect it, double-click to zoom in."></canvas>
+    </div>
+    <canvas id="overview" class="overview" aria-hidden="true"></canvas>
+  </section>
+
+  <div id="splitter" class="splitter" role="separator" aria-orientation="horizontal" aria-label="Resize timeline" tabindex="0"></div>
+
+  <main class="workspace">
+    <section class="tree-panel" aria-label="Call tree">
+      <div class="panel-toolbar tree-toolbar">
+        <label class="search">
+          <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
+          <input id="search" type="search" placeholder="Search names, inputs, outputs" aria-label="Search spans" autocomplete="off" spellcheck="false">
+          <kbd>/</kbd>
+        </label>
+        <div class="tree-actions">
+          <button class="btn-link" id="btn-expand" type="button">Expand all</button>
+          <button class="btn-link" id="btn-collapse" type="button">Collapse</button>
+        </div>
+        <div id="filter-chips" class="chips" role="group" aria-label="Filter spans"></div>
+      </div>
+      <div id="tree" class="tree"></div>
+    </section>
+    <aside class="side-panel" aria-label="Details and insights">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-details" type="button" aria-selected="false">Details</button>
+        <button role="tab" id="tab-insights" type="button" aria-selected="true">Insights</button>
+      </div>
+      <div id="side-body" class="side-body" role="tabpanel"></div>
+    </aside>
+  </main>
+
+  <div class="empty" id="empty">
+    <div class="empty-card">
+      <div class="empty-mark" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
+      <h2>See what your agent actually did</h2>
+      <p>Drop a trace anywhere on this page, or open one. Nothing leaves your machine.</p>
+      <button class="btn primary" id="empty-open" type="button">Open a trace file</button>
+      <ul class="formats">
+        <li><b>Claude Code transcript</b><span><code>~/.claude/projects/&lt;project&gt;/&lt;session&gt;.jsonl</code></span></li>
+        <li><b>OpenTelemetry</b><span>OTLP/JSON trace exports (Jaeger, Tempo, Langfuse, Phoenix, collectors)</span></li>
+        <li><b>agent-trace JSON</b><span>files exported from this viewer</span></li>
+      </ul>
+      <p class="note">From a terminal: <code>agent-trace view</code> opens your latest Claude Code session.</p>
+    </div>
+  </div>
+
+  <div id="drop" class="drop-overlay" hidden><div class="drop-card">Drop to open</div></div>
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="help" class="help" aria-labelledby="help-title">
+    <div class="help-head"><h2 id="help-title">Keyboard &amp; mouse</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="help-grid">
+      <section><h3>Timeline</h3><dl>
+        <div><dt>Scroll</dt><dd>Zoom at the cursor</dd></div>
+        <div><dt>Shift + scroll / drag</dt><dd>Pan</dd></div>
+        <div><dt>Click</dt><dd>Inspect a span or moment</dd></div>
+        <div><dt>Double-click</dt><dd>Zoom to a span (empty space: fit)</dd></div>
+        <div><dt><kbd>+</kbd> <kbd>-</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Zoom and pan when focused</dd></div>
+        <div><dt><kbd>f</kbd></dt><dd>Fit everything</dd></div>
+      </dl></section>
+      <section><h3>Navigate</h3><dl>
+        <div><dt><kbd>j</kbd> <kbd>k</kbd> / <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Next / previous row</dd></div>
+        <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Collapse / expand (tree)</dd></div>
+        <div><dt><kbd>Enter</kbd></dt><dd>Zoom timeline to selection</dd></div>
+        <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next moment</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
+        <div><dt><kbd>d</kbd> <kbd>i</kbd></dt><dd>Details / Insights tab</dd></div>
+        <div><dt><kbd>t</kbd></dt><dd>Theme: system, light, dark</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Clear selection</dd></div>
+      </dl></section>
+    </div>
+    <p class="note"><b>Moments</b> are inferred turning points: errors and how the agent recovered, shifts between exploring, building and verifying, unusually heavy thinking, and times you steered it mid-task.</p>
+  </dialog>
+</div>
+<script type="application/json" id="agent-trace-data">/*__DATA__*/</script>
+<script>/*__SCRIPT__*/</script>
+</body>
+</html>

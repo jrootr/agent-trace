@@ -1,0 +1,3619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>agent-trace</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236d5efc' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 6h10M8 12h12M6 18h8'/%3E%3Ccircle cx='17' cy='6' r='2'/%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='17' cy='18' r='2'/%3E%3C/svg%3E">
+<style>/* agent-trace viewer. Design tokens first; light is the default, dark via media query or [data-theme]. */
+:root {
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --panel-2: #f7f8fa;
+  --panel-3: #eef0f4;
+  --line: #e4e7ec;
+  --line-strong: #d0d5dd;
+  --text: #151922;
+  --text-2: #444c5c;
+  --text-3: #788293;
+  --accent: #5b4ff5;
+  --accent-2: #4338ca;
+  --accent-soft: rgba(91, 79, 245, 0.1);
+  --accent-ring: rgba(91, 79, 245, 0.35);
+  --sel-row: rgba(91, 79, 245, 0.09);
+  --hover-row: rgba(16, 24, 40, 0.035);
+  --turn: #9aa4b5;
+  --turn-strong: #7c8799;
+  --llm: #6d5efc;
+  --error: #e5484d;
+  --error-soft: rgba(229, 72, 77, 0.1);
+  --ok: #18a058;
+  --gap: rgba(120, 130, 147, 0.07);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 16px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 40px rgba(16, 24, 40, 0.18);
+
+  --cat-read: #2f7cf6;
+  --cat-write: #e8890c;
+  --cat-exec: #12a37f;
+  --cat-web: #0aa3c2;
+  --cat-agent: #9b51e0;
+  --cat-mcp: #e0457b;
+  --cat-meta: #8a94a6;
+  --cat-other: #a0a8b6;
+
+  --inf-error: #e5484d;
+  --inf-pivot: #2f7cf6;
+  --inf-thinking: #9b51e0;
+  --inf-user: #e8890c;
+  --inf-milestone: #18a058;
+  --inf-system: #8a94a6;
+
+  --seg-cache: #b9b3ff;
+  --seg-write: #8b80ff;
+  --seg-fresh: #5b4ff5;
+  --seg-think: #c084fc;
+  --seg-out: #6d5efc;
+
+  --radius: 10px;
+  --radius-sm: 7px;
+  --tl-h: 300px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0d11;
+    --panel: #12151b;
+    --panel-2: #161a21;
+    --panel-3: #1c2129;
+    --line: #232832;
+    --line-strong: #313844;
+    --text: #e9ecf2;
+    --text-2: #b4bccb;
+    --text-3: #7c8697;
+    --accent: #8f86ff;
+    --accent-2: #a9a2ff;
+    --accent-soft: rgba(143, 134, 255, 0.14);
+    --accent-ring: rgba(143, 134, 255, 0.45);
+    --sel-row: rgba(143, 134, 255, 0.14);
+    --hover-row: rgba(255, 255, 255, 0.035);
+    --turn: #5d6778;
+    --turn-strong: #8792a5;
+    --llm: #8f86ff;
+    --error: #ff6b70;
+    --error-soft: rgba(255, 107, 112, 0.12);
+    --ok: #3ccf86;
+    --gap: rgba(255, 255, 255, 0.025);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+    --cat-read: #5b9dff;
+    --cat-write: #ffab3d;
+    --cat-exec: #2fd3a3;
+    --cat-web: #31c9e6;
+    --cat-agent: #bf86ff;
+    --cat-mcp: #ff6b9d;
+    --cat-meta: #8d97aa;
+    --cat-other: #7f8899;
+    --inf-error: #ff6b70;
+    --inf-pivot: #5b9dff;
+    --inf-thinking: #bf86ff;
+    --inf-user: #ffab3d;
+    --inf-milestone: #3ccf86;
+    --inf-system: #8d97aa;
+    --seg-cache: #3d3878;
+    --seg-write: #5d55b8;
+    --seg-fresh: #8f86ff;
+    --seg-think: #b77cff;
+    --seg-out: #8f86ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0d11;
+  --panel: #12151b;
+  --panel-2: #161a21;
+  --panel-3: #1c2129;
+  --line: #232832;
+  --line-strong: #313844;
+  --text: #e9ecf2;
+  --text-2: #b4bccb;
+  --text-3: #7c8697;
+  --accent: #8f86ff;
+  --accent-2: #a9a2ff;
+  --accent-soft: rgba(143, 134, 255, 0.14);
+  --accent-ring: rgba(143, 134, 255, 0.45);
+  --sel-row: rgba(143, 134, 255, 0.14);
+  --hover-row: rgba(255, 255, 255, 0.035);
+  --turn: #5d6778;
+  --turn-strong: #8792a5;
+  --llm: #8f86ff;
+  --error: #ff6b70;
+  --error-soft: rgba(255, 107, 112, 0.12);
+  --ok: #3ccf86;
+  --gap: rgba(255, 255, 255, 0.025);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --cat-read: #5b9dff;
+  --cat-write: #ffab3d;
+  --cat-exec: #2fd3a3;
+  --cat-web: #31c9e6;
+  --cat-agent: #bf86ff;
+  --cat-mcp: #ff6b9d;
+  --cat-meta: #8d97aa;
+  --cat-other: #7f8899;
+  --inf-error: #ff6b70;
+  --inf-pivot: #5b9dff;
+  --inf-thinking: #bf86ff;
+  --inf-user: #ffab3d;
+  --inf-milestone: #3ccf86;
+  --inf-system: #8d97aa;
+  --seg-cache: #3d3878;
+  --seg-write: #5d55b8;
+  --seg-fresh: #8f86ff;
+  --seg-think: #b77cff;
+  --seg-out: #8f86ff;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { font: inherit; color: inherit; }
+code, kbd, pre { font-family: var(--font-mono); }
+kbd {
+  display: inline-block; min-width: 18px; padding: 0 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px;
+  border-radius: 5px; background: var(--panel-2); color: var(--text-2); font-size: 11px; line-height: 16px; text-align: center;
+}
+:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
+.icon { flex: none; display: block; }
+[hidden] { display: none !important; }
+
+/* ---------- layout ---------- */
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto 8px minmax(0, 1fr);
+  gap: 0 0;
+  padding: 0 14px 14px;
+}
+.app[data-state="empty"] > .timeline-panel,
+.app[data-state="empty"] > .splitter,
+.app[data-state="empty"] > .workspace,
+.app[data-state="empty"] .stat-chips,
+.app[data-state="empty"] #btn-export,
+.app[data-state="empty"] .title-wrap { visibility: hidden; }
+.app[data-state="ready"] > .empty { display: none; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  display: flex; align-items: center; gap: 16px; min-height: 60px; padding: 10px 2px; min-width: 0;
+}
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -0.01em; color: var(--accent); flex: none; }
+.brand span { color: var(--text); }
+.title-wrap { min-width: 0; flex: 1 1 auto; padding-left: 16px; border-left: 1px solid var(--line); }
+.trace-title { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trace-meta { color: var(--text-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picker { max-width: 220px; height: 32px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); padding: 0 8px; }
+.stat-chips { display: flex; gap: 6px; flex: none; }
+.stat {
+  display: flex; flex-direction: column; align-items: flex-start; padding: 4px 10px; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--line); min-width: 64px;
+}
+.stat b { font-size: 13.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.stat.has-error b { color: var(--error); }
+.actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--panel); cursor: pointer; font-weight: 550; white-space: nowrap;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+.btn:hover { background: var(--panel-2); border-color: var(--text-3); }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; height: 38px; padding: 0 18px; }
+.btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+.icon-btn {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid transparent;
+  background: transparent; cursor: pointer; color: var(--text-2); transition: background .12s, color .12s;
+}
+.icon-btn:hover:not(:disabled) { background: var(--panel-3); color: var(--text); }
+.icon-btn:disabled { opacity: .35; cursor: default; }
+.icon-btn.sm { width: 26px; height: 26px; }
+.btn-group { display: flex; align-items: center; gap: 2px; }
+.btn-link { border: 0; background: none; padding: 2px 4px; color: var(--text-3); cursor: pointer; font-size: 12px; }
+.btn-link:hover { color: var(--accent); }
+
+.menu-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 260px; padding: 6px; border-radius: var(--radius);
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-lg);
+}
+.menu button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--radius-sm); background: none; cursor: pointer; text-align: left; }
+.menu button:hover, .menu button:focus-visible { background: var(--panel-3); }
+.menu b { font-weight: 600; }
+.menu span { color: var(--text-3); font-size: 12px; }
+
+/* ---------- panels ---------- */
+.timeline-panel, .tree-panel, .side-panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); min-width: 0; min-height: 0;
+}
+.timeline-panel { display: flex; flex-direction: column; overflow: hidden; height: var(--tl-h); }
+.panel-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); min-height: 44px; flex-wrap: wrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; flex: 1 1 auto; color: var(--text-2); font-size: 11.5px; min-width: 0; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.legend b { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.tl-controls { display: flex; align-items: center; gap: 12px; flex: none; }
+.timeline-scroll { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.timeline { display: block; width: 100%; cursor: grab; touch-action: none; }
+.timeline.is-panning { cursor: grabbing; }
+.timeline:focus-visible { outline-offset: -2px; }
+.overview { display: block; width: 100%; height: 30px; border-top: 1px solid var(--line); cursor: pointer; touch-action: none; flex: none; background: var(--panel-2); }
+
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-2); font-size: 12px; user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-track { position: relative; width: 28px; height: 16px; border-radius: 999px; background: var(--line-strong); transition: background .15s; }
+.switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.switch input:checked + .switch-track { background: var(--accent); }
+.switch input:checked + .switch-track::after { transform: translateX(12px); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
+
+.splitter { cursor: row-resize; position: relative; }
+.splitter::after { content: ""; position: absolute; left: 50%; top: 2px; width: 44px; height: 4px; margin-left: -22px; border-radius: 4px; background: var(--line-strong); opacity: .7; transition: opacity .12s, background .12s; }
+.splitter:hover::after, .splitter:focus-visible::after { opacity: 1; background: var(--accent); }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); gap: 12px; min-height: 0; }
+.tree-panel { display: flex; flex-direction: column; overflow: hidden; }
+.side-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+/* ---------- search & chips ---------- */
+.tree-toolbar { row-gap: 8px; }
+.search {
+  display: flex; align-items: center; gap: 8px; flex: 1 1 220px; height: 32px; padding: 0 8px 0 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--text-3);
+}
+.search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.search input { flex: 1; min-width: 0; border: 0; outline: none; background: none; color: var(--text); font: inherit; }
+.search input::-webkit-search-cancel-button { cursor: pointer; }
+.tree-actions { display: flex; gap: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; }
+.chip {
+  --c: var(--accent);
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line-strong); background: var(--panel); color: var(--text-3); font-size: 12px; font-weight: 550;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); opacity: .35; transition: opacity .12s; }
+.chip.is-on { color: var(--text); border-color: color-mix(in srgb, var(--c) 45%, var(--line-strong)); background: color-mix(in srgb, var(--c) 9%, var(--panel)); }
+.chip.is-on::before { opacity: 1; }
+.chip:hover { border-color: var(--c); }
+.chip-n { color: var(--text-3); font-variant-numeric: tabular-nums; font-weight: 500; }
+.chip-sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 2px; }
+
+/* ---------- tree ---------- */
+.tree { position: relative; flex: 1 1 auto; min-height: 0; }
+.tree-viewport { position: absolute; inset: 0; overflow: auto; outline: none; }
+.tree-viewport:focus-visible { box-shadow: inset 0 0 0 2px var(--accent-ring); }
+.tree-rows { position: absolute; top: 0; left: 0; right: 0; }
+.tree-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-3); }
+.tree-row {
+  position: absolute; left: 0; right: 0; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 8px;
+  cursor: pointer; white-space: nowrap; border-left: 2px solid transparent;
+}
+.tree-row:hover { background: var(--hover-row); }
+.tree-row.is-selected { background: var(--sel-row); border-left-color: var(--accent); }
+.tree-row.is-dim { opacity: .5; }
+.tr-indent { flex: none; }
+.tr-twisty { flex: none; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; color: var(--text-3); transition: transform .12s; }
+.tr-twisty:hover { background: var(--panel-3); color: var(--text); }
+.tr-twisty.is-open { transform: rotate(90deg); }
+.tr-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); }
+.kind-turn .tr-dot { border-radius: 2px; }
+.kind-llm .tr-dot { border-radius: 2px; transform: rotate(45deg); }
+.tr-name { flex: none; max-width: 46%; overflow: hidden; text-overflow: ellipsis; font-weight: 550; }
+.kind-turn .tr-name { font-weight: 650; }
+.kind-llm .tr-name { color: var(--text-2); font-weight: 500; }
+.tree-row.is-error .tr-name { color: var(--error); }
+.tr-detail { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-3); font-size: 12px; }
+.kind-tool .tr-detail { font-family: var(--font-mono); font-size: 11.5px; }
+.tr-badges { flex: none; display: flex; gap: 3px; }
+.badge-inf { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); }
+.tr-bar { flex: none; position: relative; width: 72px; height: 6px; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
+.tr-bar i { position: absolute; top: 0; bottom: 0; min-width: 2px; border-radius: 3px; opacity: .85; }
+.tr-dur { flex: none; width: 58px; text-align: right; color: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* ---------- side panel ---------- */
+.tabs { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); }
+.tabs [role="tab"] {
+  position: relative; height: 34px; padding: 0 12px; border: 0; background: none; cursor: pointer; color: var(--text-3); font-weight: 600;
+}
+.tabs [role="tab"][aria-selected="true"] { color: var(--text); }
+.tabs [role="tab"][aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+.side-body { flex: 1 1 auto; overflow: auto; padding: 16px; min-height: 0; }
+.placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-3); gap: 4px; padding: 24px; }
+.placeholder p { max-width: 280px; margin: 6px 0 0; }
+
+.details { display: flex; flex-direction: column; gap: 12px; }
+.d-head { display: flex; align-items: center; gap: 8px; }
+.d-nav { margin-left: auto; display: flex; gap: 2px; }
+.flip { display: block; transform: rotate(180deg); }
+.kind-pill { --c: var(--accent); display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
+.status { height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; }
+.status.is-ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.status.is-error { color: var(--error); background: var(--error-soft); }
+.d-title { margin: 0; font-size: 17px; line-height: 1.3; font-weight: 650; letter-spacing: -0.01em; word-break: break-word; }
+.d-sub { margin: -6px 0 0; color: var(--text-2); font-family: var(--font-mono); font-size: 12px; word-break: break-all; }
+.crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; margin-top: -4px; }
+.crumb { border: 0; background: none; padding: 2px 4px; border-radius: 4px; color: var(--text-3); cursor: pointer; font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crumb:hover { color: var(--accent); background: var(--accent-soft); }
+.crumb-sep { color: var(--text-3); opacity: .6; }
+.callout { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 12.5px; }
+.callout.is-error { color: var(--error); background: var(--error-soft); }
+.callout .icon { margin-top: 2px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 1px; margin: 0; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--line); }
+.facts div { background: var(--panel-2); padding: 8px 10px; min-width: 0; }
+.facts dt { color: var(--text-3); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.facts dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-section h3 { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); font-weight: 650; }
+.d-section .count { color: var(--text-2); background: var(--panel-3); border-radius: 999px; padding: 0 7px; font-size: 11px; }
+.d-block { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel-2); overflow: hidden; }
+.d-block > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; cursor: pointer; list-style: none; font-weight: 600; font-size: 12px; color: var(--text-2); }
+.d-block > summary::-webkit-details-marker { display: none; }
+.d-block > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .12s; margin-right: 2px; }
+.d-block[open] > summary::before { transform: rotate(45deg); }
+.d-block > summary span { margin-right: auto; }
+.code { margin: 0; padding: 10px 12px; max-height: 420px; overflow: auto; border-top: 1px solid var(--line); background: var(--panel); font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; tab-size: 2; }
+.d-block .btn-link { display: block; padding: 6px 12px; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.attrs table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--panel); }
+.attrs th, .attrs td { text-align: left; vertical-align: top; padding: 5px 12px; border-top: 1px solid var(--line); }
+.attrs th { color: var(--text-3); font-weight: 500; font-family: var(--font-mono); font-size: 11.5px; width: 42%; word-break: break-all; }
+.attrs td { font-family: var(--font-mono); font-size: 11.5px; word-break: break-word; }
+.note { color: var(--text-3); font-size: 12px; margin: 0; }
+
+.tok { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel-2); }
+.tok-row { display: grid; grid-template-columns: 56px 1fr 52px; align-items: center; gap: 10px; }
+.tok-label { color: var(--text-3); font-size: 11.5px; }
+.tok-num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tok-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--panel-3); }
+.tok-bar i { display: block; height: 100%; }
+.tok-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--text-3); font-size: 11px; }
+.tok-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.tok-legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.seg-cache { background: var(--seg-cache); }
+.seg-write { background: var(--seg-write); }
+.seg-fresh { background: var(--seg-fresh); }
+.seg-think { background: var(--seg-think); }
+.seg-out { background: var(--seg-out); }
+
+.inf-list { display: flex; flex-direction: column; gap: 4px; }
+.inf-item {
+  --c: var(--accent); display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 7px 10px 7px 8px;
+  border: 1px solid transparent; border-radius: var(--radius-sm); background: none; cursor: pointer; text-align: left;
+}
+.inf-item:hover { background: var(--panel-2); border-color: var(--line); }
+.inf-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); }
+.inf-text { display: flex; flex-direction: column; min-width: 0; }
+.inf-kind { font-size: 11px; color: var(--c); font-weight: 650; text-transform: uppercase; letter-spacing: .04em; }
+.inf-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inf-time { color: var(--text-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
+.mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+.mini-stats div { display: flex; flex-direction: column; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--panel-2); border: 1px solid var(--line); }
+.mini-stats b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.mini-stats span { color: var(--text-3); font-size: 11px; }
+.mini-stats .has-error b { color: var(--error); }
+
+.insights { display: flex; flex-direction: column; gap: 16px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.card { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--panel-2); border: 1px solid var(--line); }
+.card-label { color: var(--text-3); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.card-value { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.card-sub { color: var(--text-3); font-size: 11.5px; }
+.card.has-error .card-value { color: var(--error); }
+.insights .chips { margin-bottom: 8px; }
+.stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; margin-bottom: 8px; }
+.stack i { display: block; height: 100%; min-width: 3px; }
+.d-section > .legend { margin-bottom: 10px; }
+.tools-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.tools-table th { text-align: left; color: var(--text-3); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.tools-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.tools-table tbody tr { cursor: pointer; }
+.tools-table tbody tr:hover { background: var(--panel-2); }
+.tools-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tools-table .has-error { color: var(--error); font-weight: 600; }
+.tools-table .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+.bar-cell { display: inline-block; vertical-align: middle; width: 56px; height: 5px; margin-right: 8px; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
+.bar-cell i { display: block; height: 100%; border-radius: 3px; }
+
+/* ---------- overlays ---------- */
+.empty { grid-row: 2 / -1; grid-column: 1; display: grid; place-items: center; padding: 24px; }
+.empty-card { max-width: 560px; text-align: center; padding: 40px 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+.empty-mark { display: inline-grid; place-items: center; width: 72px; height: 72px; border-radius: 20px; color: var(--accent); background: var(--accent-soft); margin-bottom: 16px; }
+.empty-card h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.02em; }
+.empty-card > p { color: var(--text-2); margin: 0 0 20px; }
+.formats { list-style: none; padding: 0; margin: 24px 0 16px; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+.formats li { display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel-2); }
+.formats span { color: var(--text-3); font-size: 12px; }
+.formats code, .empty-card .note code { font-size: 11.5px; }
+.drop-overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(3px); }
+.drop-card { padding: 40px 64px; border: 2px dashed var(--accent); border-radius: 18px; background: var(--panel); color: var(--accent); font-size: 18px; font-weight: 650; box-shadow: var(--shadow-lg); }
+.tooltip {
+  position: fixed; left: 0; top: 0; z-index: 40; max-width: 360px; padding: 9px 11px; border-radius: 9px; pointer-events: none;
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: var(--shadow-lg); font-size: 12px;
+}
+.tt-kicker { color: var(--text-3); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 650; }
+.tt-title { font-weight: 650; margin: 1px 0 2px; word-break: break-word; }
+.tt-meta { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tt-line { color: var(--text-2); margin-top: 3px; font-family: var(--font-mono); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt-error { color: var(--error); }
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 60; max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 16px; border-radius: 10px; background: var(--text); color: var(--panel); box-shadow: var(--shadow-lg); font-weight: 550;
+}
+.toast.is-error { background: var(--error); color: #fff; }
+.help { width: min(720px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--text); box-shadow: var(--shadow-lg); }
+.help::backdrop { background: rgba(10, 12, 16, 0.45); backdrop-filter: blur(2px); }
+.help-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px 20px; }
+.help-head h2 { margin: 0; font-size: 16px; }
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; padding: 0 20px; }
+.help h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); margin: 10px 0 6px; }
+.help dl { margin: 0; }
+.help dl div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.help dt { color: var(--text-2); white-space: nowrap; }
+.help dd { margin: 0; text-align: right; }
+.help > .note { padding: 14px 20px 18px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1180px) {
+  .stat-chips .stat:nth-child(n+4) { display: none; }
+}
+@media (max-width: 920px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100vh; grid-template-rows: auto auto 8px auto; padding: 0 10px 10px; }
+  .topbar { flex-wrap: wrap; gap: 10px; }
+  .title-wrap { order: 3; flex-basis: 100%; border-left: 0; padding-left: 0; }
+  .stat-chips { display: none; }
+  .actions .btn span { display: none; }
+  .workspace { grid-template-columns: 1fr; }
+  .tree-panel { height: 60vh; }
+  .side-panel { min-height: 50vh; }
+  .help-grid { grid-template-columns: 1fr; }
+  .tr-bar { display: none; }
+  .timeline-panel .legend { display: none; }
+  .tl-controls { width: 100%; justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="app" class="app" data-state="empty">
+  <header class="topbar">
+    <div class="brand" title="agent-trace">
+      <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      <span>agent-trace</span>
+    </div>
+    <div class="title-wrap">
+      <h1 id="trace-title" class="trace-title">No trace loaded</h1>
+      <div id="trace-meta" class="trace-meta"></div>
+    </div>
+    <select id="trace-picker" class="picker" hidden aria-label="Choose a trace"></select>
+    <div id="stat-chips" class="stat-chips" aria-label="Session summary"></div>
+    <div class="actions">
+      <button id="btn-open" class="btn" type="button"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open</span></button>
+      <div class="menu-wrap">
+        <button id="btn-export" class="btn" type="button" aria-haspopup="menu" aria-expanded="false"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span>Export</span></button>
+        <div id="export-menu" class="menu" role="menu" hidden>
+          <button role="menuitem" type="button" data-export="otlp"><b>OpenTelemetry</b><span>OTLP/JSON with GenAI conventions</span></button>
+          <button role="menuitem" type="button" data-export="trace"><b>agent-trace JSON</b><span>Normalized trace, re-openable here</span></button>
+        </div>
+      </div>
+      <button id="btn-theme" class="icon-btn" type="button"></button>
+      <button id="btn-help" class="icon-btn" type="button" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17h.01"/></svg></button>
+    </div>
+    <input id="file-input" type="file" accept=".jsonl,.json,application/json,application/x-ndjson" hidden>
+  </header>
+
+  <section class="timeline-panel" aria-label="Timeline">
+    <div class="panel-toolbar">
+      <div id="tl-legend" class="legend"></div>
+      <div class="tl-controls">
+        <label class="switch" title="Squeeze long idle stretches so the activity stays readable">
+          <input type="checkbox" id="opt-compress"><span class="switch-track" aria-hidden="true"></span><span>Compress idle</span>
+        </label>
+        <div class="btn-group">
+          <button class="icon-btn" id="btn-zoom-out" type="button" title="Zoom out (-)" aria-label="Zoom out"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <button class="icon-btn" id="btn-zoom-in" type="button" title="Zoom in (+)" aria-label="Zoom in"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="btn sm" id="btn-fit" type="button" title="Fit everything (f)">Fit</button>
+        </div>
+      </div>
+    </div>
+    <div class="timeline-scroll">
+      <canvas id="timeline" class="timeline" tabindex="0" aria-label="Timeline. Scroll to zoom, drag to pan, click a bar to inspect it, double-click to zoom in."></canvas>
+    </div>
+    <canvas id="overview" class="overview" aria-hidden="true"></canvas>
+  </section>
+
+  <div id="splitter" class="splitter" role="separator" aria-orientation="horizontal" aria-label="Resize timeline" tabindex="0"></div>
+
+  <main class="workspace">
+    <section class="tree-panel" aria-label="Call tree">
+      <div class="panel-toolbar tree-toolbar">
+        <label class="search">
+          <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
+          <input id="search" type="search" placeholder="Search names, inputs, outputs" aria-label="Search spans" autocomplete="off" spellcheck="false">
+          <kbd>/</kbd>
+        </label>
+        <div class="tree-actions">
+          <button class="btn-link" id="btn-expand" type="button">Expand all</button>
+          <button class="btn-link" id="btn-collapse" type="button">Collapse</button>
+        </div>
+        <div id="filter-chips" class="chips" role="group" aria-label="Filter spans"></div>
+      </div>
+      <div id="tree" class="tree"></div>
+    </section>
+    <aside class="side-panel" aria-label="Details and insights">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-details" type="button" aria-selected="false">Details</button>
+        <button role="tab" id="tab-insights" type="button" aria-selected="true">Insights</button>
+      </div>
+      <div id="side-body" class="side-body" role="tabpanel"></div>
+    </aside>
+  </main>
+
+  <div class="empty" id="empty">
+    <div class="empty-card">
+      <div class="empty-mark" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
+      <h2>See what your agent actually did</h2>
+      <p>Drop a trace anywhere on this page, or open one. Nothing leaves your machine.</p>
+      <button class="btn primary" id="empty-open" type="button">Open a trace file</button>
+      <ul class="formats">
+        <li><b>Claude Code transcript</b><span><code>~/.claude/projects/&lt;project&gt;/&lt;session&gt;.jsonl</code></span></li>
+        <li><b>OpenTelemetry</b><span>OTLP/JSON trace exports (Jaeger, Tempo, Langfuse, Phoenix, collectors)</span></li>
+        <li><b>agent-trace JSON</b><span>files exported from this viewer</span></li>
+      </ul>
+      <p class="note">From a terminal: <code>agent-trace view</code> opens your latest Claude Code session.</p>
+    </div>
+  </div>
+
+  <div id="drop" class="drop-overlay" hidden><div class="drop-card">Drop to open</div></div>
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="help" class="help" aria-labelledby="help-title">
+    <div class="help-head"><h2 id="help-title">Keyboard &amp; mouse</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="help-grid">
+      <section><h3>Timeline</h3><dl>
+        <div><dt>Scroll</dt><dd>Zoom at the cursor</dd></div>
+        <div><dt>Shift + scroll / drag</dt><dd>Pan</dd></div>
+        <div><dt>Click</dt><dd>Inspect a span or moment</dd></div>
+        <div><dt>Double-click</dt><dd>Zoom to a span (empty space: fit)</dd></div>
+        <div><dt><kbd>+</kbd> <kbd>-</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Zoom and pan when focused</dd></div>
+        <div><dt><kbd>f</kbd></dt><dd>Fit everything</dd></div>
+      </dl></section>
+      <section><h3>Navigate</h3><dl>
+        <div><dt><kbd>j</kbd> <kbd>k</kbd> / <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Next / previous row</dd></div>
+        <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Collapse / expand (tree)</dd></div>
+        <div><dt><kbd>Enter</kbd></dt><dd>Zoom timeline to selection</dd></div>
+        <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next moment</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
+        <div><dt><kbd>d</kbd> <kbd>i</kbd></dt><dd>Details / Insights tab</dd></div>
+        <div><dt><kbd>t</kbd></dt><dd>Theme: system, light, dark</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Clear selection</dd></div>
+      </dl></section>
+    </div>
+    <p class="note"><b>Moments</b> are inferred turning points: errors and how the agent recovered, shifts between exploring, building and verifying, unusually heavy thinking, and times you steered it mid-task.</p>
+  </dialog>
+</div>
+<script type="application/json" id="agent-trace-data">null</script>
+<script>(() => {
+'use strict';
+// ---- core/util.mjs ----
+// Small helpers shared by the adapters, the analysis code, and the viewer.
+// Everything under src/ runs in both Node and the browser: no Node built-ins here.
+
+/** Deterministic hex hash (FNV-1a, run with several seeds and concatenated). */
+function hashHex(input, length = 16) {
+  const str = String(input);
+  let out = '';
+  for (let seed = 0; out.length < length; seed++) {
+    let h = (0x811c9dc5 ^ (seed * 0x9e3779b1)) >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    out += h.toString(16).padStart(8, '0');
+  }
+  return out.slice(0, length);
+}
+
+function truncateText(value, max) {
+  if (value == null) return value;
+  const s = typeof value === 'string' ? value : JSON.stringify(value);
+  if (s.length <= max) return s;
+  return s.slice(0, max) + `\n… [${(s.length - max).toLocaleString('en-US')} more characters truncated]`;
+}
+
+function percentile(values, p) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
+  return sorted[idx];
+}
+
+function clamp(v, lo, hi) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function parseTime(value) {
+  if (typeof value === 'number') return value;
+  const t = Date.parse(value);
+  return Number.isFinite(t) ? t : null;
+}
+
+/** Text from an Anthropic-style content value: a string, or an array of blocks. */
+function contentText(content) {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
+    .map((b) => (typeof b === 'string' ? b : b?.type === 'text' ? b.text : b?.type === 'image' ? '[image]' : ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
+// ---- core/redact.mjs ----
+// Best-effort secret scrubbing before anything is written into a report or exported.
+
+const REDACTED_MARK = '[REDACTED]';
+
+const SECRET_WORDS = new Set([
+  'password', 'passwd', 'passphrase', 'secret', 'token', 'apikey', 'credential', 'credentials',
+  'cookie', 'cookies', 'authorization', 'bearer', 'privatekey', 'otp',
+]);
+const SECRET_KEY_RE = /api[-_]?key|private[-_]?key|access[-_]?key|client[-_]?secret|session[-_]?token/i;
+const SECRET_VALUE_RES = [
+  /\bsk-[A-Za-z0-9_-]{16,}/g,
+  /\bgh[pousr]_[A-Za-z0-9]{20,}/g,
+  /\bgithub_pat_[A-Za-z0-9_]{20,}/g,
+  /\bxox[abprs]-[A-Za-z0-9-]{10,}/g,
+  /\bAKIA[0-9A-Z]{16}\b/g,
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+/g,
+  /\bBearer\s+[A-Za-z0-9._~+/-]{10,}=*/gi,
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
+];
+
+function isSecretKeyName(key) {
+  if (!key) return false;
+  if (SECRET_KEY_RE.test(key)) return true;
+  const words = String(key).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase().split(/[^a-z0-9]+/);
+  return words.some((w) => SECRET_WORDS.has(w));
+}
+
+function redactString(s) {
+  let out = s;
+  for (const re of SECRET_VALUE_RES) out = out.replace(re, REDACTED_MARK);
+  return out;
+}
+
+function redactValue(value, key) {
+  if (key && isSecretKeyName(key) && value != null && value !== '' && typeof value !== 'boolean') return REDACTED_MARK;
+  if (typeof value === 'string') return redactString(value);
+  if (Array.isArray(value)) return value.map((v) => redactValue(v));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = redactValue(v, k);
+    return out;
+  }
+  return value;
+}
+
+// ---- core/categories.mjs ----
+// Group tools into a few categories (for color and filtering) and work phases
+// (for spotting pivots such as "exploring" → "building").
+
+const CATEGORIES = ['read', 'write', 'exec', 'web', 'agent', 'mcp', 'meta', 'other'];
+
+const CATEGORY_LABELS = {
+  read: 'Read & search',
+  write: 'Write & edit',
+  exec: 'Shell',
+  web: 'Web & browser',
+  agent: 'Subagents',
+  mcp: 'MCP',
+  meta: 'Planning & meta',
+  other: 'Other',
+};
+
+const BY_NAME = {
+  Read: 'read', Glob: 'read', Grep: 'read', LS: 'read', NotebookRead: 'read',
+  Write: 'write', Edit: 'write', MultiEdit: 'write', NotebookEdit: 'write',
+  Bash: 'exec', PowerShell: 'exec', BashOutput: 'exec', KillShell: 'exec', Monitor: 'exec', TaskStop: 'exec',
+  WebFetch: 'web', WebSearch: 'web',
+  Agent: 'agent', Task: 'agent', SendMessage: 'agent',
+  TodoWrite: 'meta', ToolSearch: 'meta', Skill: 'meta', AskUserQuestion: 'meta', ExitPlanMode: 'meta',
+  EnterPlanMode: 'meta', SlashCommand: 'meta',
+};
+
+const TEST_CMD = /\b(npm (run )?test|pnpm test|yarn test|node --test|pytest|jest|vitest|mocha|go test|cargo test|dotnet test|mvn test|gradle test|rspec|phpunit|tox)\b|\bvalidate\b/i;
+const READ_CMD = /^\s*(cd\s+\S+\s*&&\s*)?(ls|cat|head|tail|grep|rg|find|wc|tree|pwd|which|type|git (status|log|diff|show|branch)|Get-ChildItem|Get-Content|Select-String)\b/i;
+const BROWSER_MCP = /^mcp__(Claude_Browser|claude-in-chrome|playwright|puppeteer|browser)/i;
+
+function categorizeTool(name, input) {
+  if (BY_NAME[name]) return BY_NAME[name];
+  if (typeof name === 'string' && name.startsWith('mcp__')) return BROWSER_MCP.test(name) ? 'web' : 'mcp';
+  return 'other';
+}
+
+/**
+ * Phase of work a tool call represents: explore, build, verify, or null (neutral).
+ * Shell commands are split by what they run: tests count as verify, read-only commands as explore.
+ */
+function phaseOf(name, input, category = categorizeTool(name, input)) {
+  if (category === 'read' || category === 'web') return 'explore';
+  if (category === 'write') return 'build';
+  if (category === 'exec') {
+    const cmd = typeof input?.command === 'string' ? input.command : '';
+    if (TEST_CMD.test(cmd)) return 'verify';
+    if (READ_CMD.test(cmd)) return 'explore';
+    return 'build';
+  }
+  return null;
+}
+
+const PHASE_LABELS = { explore: 'Exploring', build: 'Building', verify: 'Verifying' };
+
+/** One-line summary of a tool call's input, for tree rows and tooltips. */
+function summarizeToolInput(name, input) {
+  if (!input || typeof input !== 'object') return '';
+  const pick = input.description ?? input.command ?? input.file_path ?? input.path ?? input.pattern ?? input.url
+    ?? input.query ?? input.prompt ?? input.title ?? input.skill ?? input.action ?? null;
+  if (pick == null) {
+    const first = Object.values(input).find((v) => typeof v === 'string');
+    return first ? String(first).split('\n')[0].slice(0, 140) : '';
+  }
+  return String(pick).split('\n')[0].slice(0, 140);
+}
+
+// ---- core/model.mjs ----
+// The normalized trace model every adapter produces and the viewer consumes.
+//
+// Trace  { id, title, source, start, end, spans: Span[], events: TraceEvent[], meta }
+// Span   { id, parentId, kind, name, start, end, status, attrs, input?, output? }
+//          kind:   'session' | 'turn' | 'llm' | 'tool' | 'agent' | 'span'
+//          status: 'ok' | 'error' | 'unset'
+//          start/end: epoch milliseconds
+// TraceEvent { time, kind, label, spanId?, detail? }   instant markers (interjections, compactions…)
+//
+// It mirrors OpenTelemetry spans closely so OTLP import/export is a direct mapping.
+
+const SCHEMA_VERSION = 1;
+
+function createTrace({ id, title, source, meta = {} }) {
+  return { schema: SCHEMA_VERSION, id, title, source, start: null, end: null, spans: [], events: [], meta };
+}
+
+function addSpan(trace, span) {
+  const s = {
+    id: span.id,
+    parentId: span.parentId ?? null,
+    kind: span.kind ?? 'span',
+    name: span.name ?? span.kind ?? 'span',
+    start: span.start,
+    end: Math.max(span.end ?? span.start, span.start),
+    status: span.status ?? 'unset',
+    attrs: span.attrs ?? {},
+  };
+  if (span.input !== undefined) s.input = span.input;
+  if (span.output !== undefined) s.output = span.output;
+  trace.spans.push(s);
+  return s;
+}
+
+/** Set trace start/end from its spans and events, and widen parents to cover their children. */
+function finalizeTrace(trace) {
+  const { byId, children } = indexTrace(trace);
+  const widen = (span) => {
+    for (const child of children.get(span.id) ?? []) {
+      widen(child);
+      if (child.start < span.start) span.start = child.start;
+      if (child.end > span.end) span.end = child.end;
+    }
+  };
+  for (const s of trace.spans) if (!s.parentId || !byId.has(s.parentId)) widen(s);
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const s of trace.spans) {
+    if (s.start < lo) lo = s.start;
+    if (s.end > hi) hi = s.end;
+  }
+  for (const e of trace.events) {
+    if (e.time < lo) lo = e.time;
+    if (e.time > hi) hi = e.time;
+  }
+  trace.start = Number.isFinite(lo) ? lo : 0;
+  trace.end = Number.isFinite(hi) ? hi : trace.start;
+  trace.spans.sort((a, b) => a.start - b.start || kindOrder(a.kind) - kindOrder(b.kind));
+  trace.events.sort((a, b) => a.time - b.time);
+  return trace;
+}
+
+const KIND_ORDER = { session: 0, turn: 1, agent: 2, llm: 3, tool: 4, span: 5 };
+function kindOrder(kind) {
+  return KIND_ORDER[kind] ?? 9;
+}
+
+function indexTrace(trace) {
+  const byId = new Map();
+  const children = new Map();
+  for (const s of trace.spans) byId.set(s.id, s);
+  for (const s of trace.spans) {
+    const key = s.parentId && byId.has(s.parentId) ? s.parentId : null;
+    if (!children.has(key)) children.set(key, []);
+    children.get(key).push(s);
+  }
+  for (const list of children.values()) list.sort((a, b) => a.start - b.start || kindOrder(a.kind) - kindOrder(b.kind));
+  return { byId, children };
+}
+
+/** Problems that would make a trace unusable in the viewer. Empty array = valid. */
+function validateTrace(trace) {
+  const problems = [];
+  if (!trace || typeof trace !== 'object') return ['trace is not an object'];
+  if (!Array.isArray(trace.spans)) problems.push('trace.spans must be an array');
+  const ids = new Set();
+  for (const s of trace.spans ?? []) {
+    if (!s.id) problems.push('span without id');
+    else if (ids.has(s.id)) problems.push(`duplicate span id ${s.id}`);
+    ids.add(s.id);
+    if (!Number.isFinite(s.start) || !Number.isFinite(s.end)) problems.push(`span ${s.id} has non-numeric times`);
+    else if (s.end < s.start) problems.push(`span ${s.id} ends before it starts`);
+  }
+  for (const s of trace.spans ?? []) {
+    if (s.parentId && !ids.has(s.parentId)) problems.push(`span ${s.id} has unknown parent ${s.parentId}`);
+  }
+  return problems;
+}
+
+// ---- adapters/claude-code.mjs ----
+// Adapter: Claude Code session transcripts (~/.claude/projects/<project>/<session>.jsonl).
+//
+// A transcript is one JSON object per line. The relevant entry types:
+//   user       - a human prompt (string content) or tool results (tool_result blocks)
+//   assistant  - one entry per content block; blocks of one API response share message.id
+//                and repeat the same usage numbers
+//   system     - hook summaries, compaction boundaries, API errors
+//   attachment - context injected by the app, incl. messages queued while the agent worked
+// Entries with isSidechain=true belong to subagents and are nested under their Agent call.
+
+
+
+
+
+const DEFAULT_MAX_IO = 20000;
+const SUBAGENT_TOOLS = new Set(['Agent', 'Task']);
+
+function looksLikeClaudeTranscript(text) {
+  const head = text.slice(0, 20000);
+  return /"sessionId"\s*:/.test(head) && /"type"\s*:\s*"(user|assistant|queue-operation|summary)"/.test(head);
+}
+
+function parseLines(text) {
+  const entries = [];
+  let bad = 0;
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    try {
+      entries.push(JSON.parse(line));
+    } catch {
+      bad++;
+    }
+  }
+  return { entries, bad };
+}
+
+/** Strip app-injected wrappers so titles show what the user typed (slash commands become "/name args"). */
+function cleanPromptText(text) {
+  const raw = String(text ?? '');
+  const cmd = /<command-name>([\s\S]*?)<\/command-name>/.exec(raw);
+  if (cmd) {
+    const args = /<command-args>([\s\S]*?)<\/command-args>/.exec(raw);
+    return `${cmd[1].trim()}${args && args[1].trim() ? ' ' + args[1].trim() : ''}`;
+  }
+  const stripped = raw
+    .replace(/<(system-reminder|ide_opened_file|ide_selection|ide_diagnostics)>[\s\S]*?<\/\1>/g, '')
+    .trim();
+  return stripped || raw.trim();
+}
+
+function snippet(text, max = 80) {
+  const one = String(text ?? '').replace(/\s+/g, ' ').trim();
+  return one.length > max ? one.slice(0, max - 1) + '…' : one;
+}
+
+/** Prompts the app sends that aren't really the user typing. */
+function classifyHumanText(text) {
+  if (text.startsWith('[Request interrupted by user')) return 'interrupt';
+  if (text.startsWith('<local-command-stdout>') || text.startsWith('<local-command-caveat>')) return 'noise';
+  if (text.startsWith('<task-notification>')) return 'background';
+  return 'prompt';
+}
+
+function taskSummary(text) {
+  const m = /<summary>([\s\S]*?)<\/summary>/.exec(text);
+  return m ? m[1].trim() : 'Background task finished';
+}
+
+function parseClaudeTranscript(text, options = {}) {
+  const maxIo = options.maxIo ?? DEFAULT_MAX_IO;
+  const doRedact = options.redact !== false;
+  const keepIo = options.includeIo !== false;
+  const { entries, bad } = parseLines(text);
+
+  const clipValue = (v) => {
+    if (!keepIo || v === undefined) return undefined;
+    const clean = doRedact ? redactValue(v) : v;
+    if (typeof clean === 'string') return truncateText(clean, maxIo);
+    const json = JSON.stringify(clean);
+    return json && json.length > maxIo ? truncateText(JSON.stringify(clean, null, 2), maxIo) : clean;
+  };
+  const clipText = (s) => (keepIo ? truncateText(doRedact ? redactString(s) : s, maxIo) : undefined);
+
+  const first = entries.find((e) => e.sessionId);
+  const withEnv = entries.find((e) => e.cwd) ?? {};
+  const sessionId = first?.sessionId ?? options.id ?? 'session';
+  let title = options.title;
+  const models = new Set();
+  for (const e of entries) {
+    if (e.type === 'custom-title' && e.customTitle) title = options.title ?? e.customTitle;
+    if (e.type === 'summary' && e.summary && !title) title = e.summary;
+  }
+  const meta = {
+    sessionId,
+    cwd: withEnv.cwd ?? null,
+    gitBranch: withEnv.gitBranch ?? null,
+    version: withEnv.version ?? null,
+    entrypoint: withEnv.entrypoint ?? null,
+    skippedLines: bad,
+  };
+  const trace = createTrace({ id: sessionId, title: title ?? null, source: 'claude-code', meta });
+  const startTs = entries.map((e) => parseTime(e.timestamp)).find((t) => t != null) ?? 0;
+  const root = addSpan(trace, { id: 'session', kind: 'session', name: 'Session', start: startTs, end: startTs, status: 'ok' });
+
+  let firstPrompt = null;
+  const toolSpans = new Map(); // tool_use id -> span (shared so subagent results can resolve too)
+
+  /**
+   * Walk one stream of entries (the main conversation, or one subagent's sidechain).
+   * ctx.parentId(): where new llm/tool spans go when there is no turn.
+   */
+  function walk(list, ctx) {
+    const llmSpans = new Map();
+    let turn = null;
+    let turnActive = false;
+    let turnCount = 0;
+    let lastTime = null;
+
+    const openTurn = (time, promptText) => {
+      if (promptText && firstPrompt === null) firstPrompt = promptText;
+      if (turn) turn.end = Math.max(turn.end, lastTime ?? time);
+      turnCount++;
+      turn = addSpan(trace, {
+        id: `${ctx.prefix}turn-${turnCount}`,
+        parentId: root.id,
+        kind: 'turn',
+        name: promptText ? snippet(cleanPromptText(promptText)) : '(continued)',
+        start: time,
+        end: time,
+        status: 'ok',
+        attrs: { 'turn.index': turnCount },
+        input: promptText ? clipText(promptText) : undefined,
+      });
+      turnActive = true;
+    };
+    const parentFor = (time) => {
+      if (!ctx.turns) return ctx.parentId(time);
+      if (!turn) openTurn(time, null);
+      return turn.id;
+    };
+
+    for (const e of list) {
+      const ts = parseTime(e.timestamp);
+      if (ts == null) continue;
+
+      if (e.type === 'user' && !e.isMeta) {
+        const content = e.message?.content;
+        const results = Array.isArray(content) ? content.filter((b) => b?.type === 'tool_result') : [];
+        if (results.length) {
+          for (const block of results) {
+            const span = toolSpans.get(block.tool_use_id);
+            if (!span) continue;
+            span.end = Math.max(span.start, ts);
+            span.status = block.is_error ? 'error' : 'ok';
+            const out = contentText(block.content) || (typeof e.toolUseResult === 'string' ? e.toolUseResult : '');
+            if (out) span.output = clipText(out);
+            if (block.is_error) span.attrs['error.message'] = snippet(out, 200);
+          }
+          lastTime = ts;
+          continue;
+        }
+        const humanText = contentText(content);
+        if (!humanText) continue;
+        const kind = classifyHumanText(humanText);
+        if (kind === 'noise') continue;
+        if (!ctx.turns) {
+          lastTime = ts;
+          continue;
+        }
+        if (kind === 'interrupt') {
+          trace.events.push({ time: ts, kind: 'interrupt', label: 'Interrupted by user', spanId: turn?.id });
+          turnActive = false;
+        } else if (kind === 'background') {
+          trace.events.push({ time: ts, kind: 'background', label: taskSummary(humanText), spanId: turn?.id });
+        } else if (turnActive && turn) {
+          trace.events.push({ time: ts, kind: 'interjection', label: snippet(cleanPromptText(humanText), 120), spanId: turn.id, detail: clipText(humanText) });
+        } else {
+          openTurn(ts, humanText);
+        }
+        lastTime = ts;
+        continue;
+      }
+
+      if (e.type === 'assistant' && e.message) {
+        const msg = e.message;
+        const key = msg.id ?? e.uuid;
+        let span = llmSpans.get(key);
+        if (!span) {
+          if (msg.model) models.add(msg.model);
+          span = addSpan(trace, {
+            id: `${ctx.prefix}llm-${key}`,
+            parentId: parentFor(ts),
+            kind: 'llm',
+            name: msg.model ?? 'model',
+            start: lastTime != null && lastTime <= ts ? lastTime : ts,
+            end: ts,
+            status: 'ok',
+            attrs: { 'llm.model': msg.model ?? null },
+          });
+          llmSpans.set(key, span);
+        }
+        span.end = Math.max(span.end, ts);
+        const u = msg.usage;
+        if (u) {
+          const fresh = u.input_tokens ?? 0;
+          const cacheRead = u.cache_read_input_tokens ?? 0;
+          const cacheWrite = u.cache_creation_input_tokens ?? 0;
+          Object.assign(span.attrs, {
+            'llm.tokens.input': fresh,
+            'llm.tokens.cache_read': cacheRead,
+            'llm.tokens.cache_write': cacheWrite,
+            'llm.tokens.context': fresh + cacheRead + cacheWrite,
+            'llm.tokens.output': u.output_tokens ?? 0,
+            'llm.tokens.thinking': u.output_tokens_details?.thinking_tokens ?? 0,
+          });
+        }
+        if (msg.stop_reason) span.attrs['llm.stop_reason'] = msg.stop_reason;
+        for (const block of Array.isArray(msg.content) ? msg.content : []) {
+          if (block.type === 'thinking' || block.type === 'redacted_thinking') {
+            span.attrs['llm.thinking_blocks'] = (span.attrs['llm.thinking_blocks'] ?? 0) + 1;
+            if (block.thinking) span.attrs['llm.thinking'] = clipText(((span.attrs['llm.thinking'] ?? '') + '\n' + block.thinking).trim());
+          } else if (block.type === 'text' && block.text) {
+            const prev = typeof span.output === 'string' ? span.output + '\n\n' : '';
+            span.output = clipText(prev + block.text);
+          } else if (block.type === 'tool_use') {
+            const category = categorizeTool(block.name, block.input);
+            const tool = addSpan(trace, {
+              id: `${ctx.prefix}tool-${block.id}`,
+              parentId: span.parentId,
+              kind: 'tool',
+              name: block.name,
+              start: ts,
+              end: ts,
+              status: 'unset',
+              attrs: {
+                'tool.call_id': block.id,
+                'tool.category': category,
+                'tool.phase': phaseOf(block.name, block.input, category),
+                'tool.summary': doRedact ? redactString(summarizeToolInput(block.name, block.input)) : summarizeToolInput(block.name, block.input),
+                'tool.requested_by': span.id,
+              },
+              input: clipValue(block.input),
+            });
+            toolSpans.set(block.id, tool);
+            span.attrs['llm.tool_calls'] = (span.attrs['llm.tool_calls'] ?? 0) + 1;
+          }
+        }
+        if (msg.stop_reason && msg.stop_reason !== 'tool_use') turnActive = false;
+        lastTime = ts;
+        continue;
+      }
+
+      if (e.type === 'system') {
+        if (e.subtype === 'compact_boundary') {
+          trace.events.push({ time: ts, kind: 'compaction', label: 'Context compacted', spanId: turn?.id, detail: e.compactMetadata ? JSON.stringify(e.compactMetadata) : undefined });
+        } else if (e.subtype === 'api_error' || e.level === 'error') {
+          trace.events.push({ time: ts, kind: 'error', label: snippet(e.content ?? e.error ?? 'API error', 120), spanId: turn?.id });
+        } else if (e.subtype === 'stop_hook_summary') {
+          if (Array.isArray(e.hookErrors) && e.hookErrors.length) {
+            trace.events.push({ time: ts, kind: 'error', label: `Stop hook error: ${snippet(JSON.stringify(e.hookErrors[0]), 100)}`, spanId: turn?.id });
+          }
+          if (ctx.turns) turnActive = false;
+        }
+        continue;
+      }
+
+      if (e.type === 'attachment' && e.attachment?.type === 'queued_command' && ctx.turns) {
+        const prompt = String(e.attachment.prompt ?? '');
+        if (prompt.startsWith('<task-notification>')) {
+          trace.events.push({ time: ts, kind: 'background', label: taskSummary(prompt), spanId: turn?.id });
+        } else if (prompt) {
+          trace.events.push({ time: ts, kind: 'interjection', label: snippet(prompt, 120), spanId: turn?.id, detail: clipText(prompt) });
+        }
+      }
+    }
+    if (turn && lastTime != null) turn.end = Math.max(turn.end, lastTime);
+  }
+
+  const main = entries.filter((e) => !e.isSidechain);
+  walk(main, { prefix: '', turns: true });
+
+  // Subagents: group sidechain entries per agent and hang them under the Agent call that spawned them.
+  const groups = new Map();
+  for (const e of entries) {
+    if (!e.isSidechain) continue;
+    const key = e.agentId ?? e.sessionId ?? 'sidechain';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  }
+  const agentCalls = trace.spans.filter((s) => s.kind === 'tool' && SUBAGENT_TOOLS.has(s.name));
+  let n = 0;
+  for (const [key, list] of groups) {
+    n++;
+    const t0 = list.map((e) => parseTime(e.timestamp)).find((t) => t != null);
+    const host = agentCalls.filter((s) => s.start <= (t0 ?? 0)).sort((a, b) => b.start - a.start)[0];
+    const agentSpan = addSpan(trace, {
+      id: `agent-${n}`,
+      parentId: host?.id ?? root.id,
+      kind: 'agent',
+      name: host?.attrs['tool.summary'] || `Subagent ${key.slice(0, 8)}`,
+      start: t0 ?? startTs,
+      end: t0 ?? startTs,
+      status: 'ok',
+      attrs: { 'agent.id': key },
+    });
+    walk(list, { prefix: `a${n}-`, turns: false, parentId: () => agentSpan.id });
+  }
+
+  trace.meta.models = [...models];
+  if (!trace.title) trace.title = firstPrompt ? snippet(cleanPromptText(firstPrompt), 60) : `Session ${sessionId.slice(0, 8)}`;
+  finalizeTrace(trace);
+  root.name = trace.title;
+  return trace;
+}
+
+// ---- adapters/otlp.mjs ----
+// OpenTelemetry interop: export traces as OTLP/JSON, and import OTLP/JSON from any source.
+//
+// Export follows the OpenTelemetry GenAI semantic conventions (gen_ai.*), so traces land in
+// Jaeger, Tempo, Langfuse, Phoenix, etc. as chat / execute_tool / invoke_agent spans. Everything
+// else is kept under the agent_trace.* prefix, which lets an exported trace round-trip losslessly.
+
+
+
+
+const OTLP_KIND_INTERNAL = 1;
+const OTLP_KIND_CLIENT = 3;
+const ATTR_PREFIX = 'agent_trace.';
+const MAX_ATTR_CHARS = 8192;
+
+function looksLikeOtlp(text) {
+  return /"resourceSpans"\s*:/.test(text.slice(0, 20000));
+}
+
+function toAnyValue(v) {
+  if (typeof v === 'string') return { stringValue: v };
+  if (typeof v === 'boolean') return { boolValue: v };
+  if (typeof v === 'number') return Number.isInteger(v) ? { intValue: String(v) } : { doubleValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.filter((x) => x != null).map(toAnyValue) } };
+  return { stringValue: JSON.stringify(v) };
+}
+
+function fromAnyValue(v) {
+  if (!v || typeof v !== 'object') return v;
+  if ('stringValue' in v) return v.stringValue;
+  if ('boolValue' in v) return v.boolValue;
+  if ('intValue' in v) return Number(v.intValue);
+  if ('doubleValue' in v) return Number(v.doubleValue);
+  if ('arrayValue' in v) return (v.arrayValue?.values ?? []).map(fromAnyValue);
+  if ('kvlistValue' in v) return attrsToObject(v.kvlistValue?.values ?? []);
+  if ('bytesValue' in v) return v.bytesValue;
+  return null;
+}
+
+function objectToAttrs(obj) {
+  const out = [];
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) continue;
+    out.push({ key, value: toAnyValue(value) });
+  }
+  return out;
+}
+
+function attrsToObject(list) {
+  const out = {};
+  for (const kv of list ?? []) out[kv.key] = fromAnyValue(kv.value);
+  return out;
+}
+
+const msToNanos = (ms) => (BigInt(Math.round(ms * 1000)) * 1000n).toString();
+const nanosToMs = (n) => Number(BigInt(String(n ?? 0)) / 1000n) / 1000;
+
+function otlpTraceId(trace) {
+  const hex = String(trace.id ?? '').replace(/-/g, '').toLowerCase();
+  return /^[0-9a-f]{32}$/.test(hex) ? hex : hashHex(`trace:${trace.id}`, 32);
+}
+
+function ioAttr(value) {
+  if (value === undefined || value === null) return undefined;
+  const s = typeof value === 'string' ? value : JSON.stringify(value);
+  return truncateText(s, MAX_ATTR_CHARS);
+}
+
+/** GenAI semantic-convention name and attributes for one span. */
+function genAiShape(span, trace) {
+  const a = span.attrs ?? {};
+  switch (span.kind) {
+    case 'session':
+      return { name: span.name, attrs: { 'gen_ai.conversation.id': trace.id } };
+    case 'turn':
+    case 'agent':
+      return {
+        name: span.name,
+        attrs: { 'gen_ai.operation.name': 'invoke_agent', 'gen_ai.agent.name': trace.source, 'gen_ai.conversation.id': trace.id },
+      };
+    case 'llm':
+      return {
+        name: `chat ${a['llm.model'] ?? span.name}`,
+        kind: OTLP_KIND_CLIENT,
+        attrs: {
+          'gen_ai.operation.name': 'chat',
+          'gen_ai.provider.name': trace.source === 'claude-code' ? 'anthropic' : undefined,
+          'gen_ai.request.model': a['llm.model'],
+          'gen_ai.response.model': a['llm.model'],
+          'gen_ai.usage.input_tokens': a['llm.tokens.context'],
+          'gen_ai.usage.output_tokens': a['llm.tokens.output'],
+          'gen_ai.response.finish_reasons': a['llm.stop_reason'] ? [a['llm.stop_reason']] : undefined,
+          'gen_ai.conversation.id': trace.id,
+        },
+      };
+    case 'tool':
+      return {
+        name: `execute_tool ${span.name}`,
+        kind: OTLP_KIND_CLIENT,
+        attrs: {
+          'gen_ai.operation.name': 'execute_tool',
+          'gen_ai.tool.name': span.name,
+          'gen_ai.tool.call.id': a['tool.call_id'],
+          'gen_ai.tool.type': 'function',
+        },
+      };
+    default:
+      return { name: span.name, attrs: {} };
+  }
+}
+
+/**
+ * Convert a trace to an OTLP/JSON ExportTraceServiceRequest.
+ * options.includeIo (default true): attach inputs/outputs as attributes (truncated).
+ * options.inflections: [{ spanId, kind, label, time }] added as span events.
+ */
+function toOtlp(trace, options = {}) {
+  const includeIo = options.includeIo !== false;
+  const traceId = otlpTraceId(trace);
+  const spanIds = new Map(trace.spans.map((s) => [s.id, hashHex(`${trace.id}/${s.id}`, 16)]));
+  const eventsBySpan = new Map();
+  const rootId = trace.spans.find((s) => !s.parentId)?.id;
+  const pushEvent = (spanId, ev) => {
+    const key = spanIds.has(spanId) ? spanId : rootId;
+    if (!eventsBySpan.has(key)) eventsBySpan.set(key, []);
+    eventsBySpan.get(key).push(ev);
+  };
+  for (const e of trace.events) {
+    pushEvent(e.spanId, {
+      timeUnixNano: msToNanos(e.time),
+      name: `${ATTR_PREFIX}${e.kind}`,
+      attributes: objectToAttrs({ label: e.label, detail: e.detail }),
+    });
+  }
+  for (const inf of options.inflections ?? []) {
+    pushEvent(inf.spanId, {
+      timeUnixNano: msToNanos(inf.time),
+      name: `${ATTR_PREFIX}inflection`,
+      attributes: objectToAttrs({ kind: inf.kind, label: inf.label, detail: inf.detail }),
+    });
+  }
+
+  const spans = trace.spans.map((s) => {
+    const shape = genAiShape(s, trace);
+    const own = {};
+    for (const [k, v] of Object.entries(s.attrs ?? {})) own[ATTR_PREFIX + k] = v;
+    own[`${ATTR_PREFIX}kind`] = s.kind;
+    own[`${ATTR_PREFIX}id`] = s.id;
+    own[`${ATTR_PREFIX}name`] = s.name;
+    if (includeIo) {
+      own[`${ATTR_PREFIX}input`] = ioAttr(s.input);
+      own[`${ATTR_PREFIX}output`] = ioAttr(s.output);
+    }
+    const out = {
+      traceId,
+      spanId: spanIds.get(s.id),
+      name: shape.name,
+      kind: shape.kind ?? OTLP_KIND_INTERNAL,
+      startTimeUnixNano: msToNanos(s.start),
+      endTimeUnixNano: msToNanos(s.end),
+      attributes: objectToAttrs({ ...shape.attrs, ...own }),
+      events: eventsBySpan.get(s.id) ?? [],
+      status: s.status === 'error'
+        ? { code: 2, message: String(s.attrs?.['error.message'] ?? 'error') }
+        : { code: s.status === 'ok' ? 1 : 0 },
+    };
+    if (s.parentId && spanIds.has(s.parentId)) out.parentSpanId = spanIds.get(s.parentId);
+    return out;
+  });
+
+  const resource = { 'service.name': trace.source ?? 'agent-trace', [`${ATTR_PREFIX}title`]: trace.title, [`${ATTR_PREFIX}trace_id`]: trace.id };
+  for (const [k, v] of Object.entries(trace.meta ?? {})) {
+    if (v !== null && (typeof v !== 'object' || Array.isArray(v))) resource[`${ATTR_PREFIX}meta.${k}`] = v;
+  }
+  return {
+    resourceSpans: [
+      {
+        resource: { attributes: objectToAttrs(resource) },
+        scopeSpans: [{ scope: { name: 'agent-trace', version: '1' }, spans }],
+      },
+    ],
+  };
+}
+
+function kindFromAttrs(attrs, hasParent) {
+  if (attrs[`${ATTR_PREFIX}kind`]) return attrs[`${ATTR_PREFIX}kind`];
+  const op = attrs['gen_ai.operation.name'];
+  if (op === 'chat' || op === 'text_completion' || op === 'generate_content' || op === 'embeddings') return 'llm';
+  if (op === 'execute_tool') return 'tool';
+  if (op === 'invoke_agent' || op === 'create_agent') return 'agent';
+  return hasParent ? 'span' : 'session';
+}
+
+/** Parse an OTLP/JSON payload into one trace per traceId, largest first. */
+function fromOtlp(input) {
+  const doc = typeof input === 'string' ? JSON.parse(input) : input;
+  const groups = new Map();
+  for (const rs of doc.resourceSpans ?? []) {
+    const resource = attrsToObject(rs.resource?.attributes);
+    for (const ss of rs.scopeSpans ?? rs.instrumentationLibrarySpans ?? []) {
+      for (const sp of ss.spans ?? []) {
+        if (!groups.has(sp.traceId)) groups.set(sp.traceId, { resource, spans: [] });
+        groups.get(sp.traceId).spans.push(sp);
+      }
+    }
+  }
+
+  const traces = [];
+  for (const [traceId, { resource, spans }] of groups) {
+    const meta = { otlpTraceId: traceId, serviceName: resource['service.name'] ?? null };
+    for (const [k, v] of Object.entries(resource)) {
+      if (k.startsWith(`${ATTR_PREFIX}meta.`)) meta[k.slice(ATTR_PREFIX.length + 5)] = v;
+    }
+    const trace = createTrace({
+      id: resource[`${ATTR_PREFIX}trace_id`] ?? traceId,
+      title: resource[`${ATTR_PREFIX}title`] ?? null,
+      source: resource['service.name'] && resource['service.name'] !== 'agent-trace' ? String(resource['service.name']) : 'otlp',
+      meta,
+    });
+    const present = new Set(spans.map((s) => s.spanId));
+    const idMap = new Map();
+    for (const sp of spans) {
+      const a = attrsToObject(sp.attributes);
+      idMap.set(sp.spanId, a[`${ATTR_PREFIX}id`] ?? sp.spanId);
+    }
+    for (const sp of spans) {
+      const a = attrsToObject(sp.attributes);
+      const hasParent = Boolean(sp.parentSpanId && present.has(sp.parentSpanId));
+      const kind = kindFromAttrs(a, hasParent);
+      const attrs = {};
+      for (const [k, v] of Object.entries(a)) {
+        if (k.startsWith(ATTR_PREFIX)) {
+          const bare = k.slice(ATTR_PREFIX.length);
+          if (!['kind', 'id', 'name', 'input', 'output'].includes(bare)) attrs[bare] = v;
+        } else attrs[k] = v;
+      }
+      // Fill our own fields from GenAI conventions when the trace came from elsewhere.
+      if (kind === 'llm') {
+        attrs['llm.model'] ??= a['gen_ai.response.model'] ?? a['gen_ai.request.model'] ?? null;
+        attrs['llm.tokens.context'] ??= a['gen_ai.usage.input_tokens'];
+        attrs['llm.tokens.output'] ??= a['gen_ai.usage.output_tokens'];
+      }
+      let name = a[`${ATTR_PREFIX}name`] ?? sp.name;
+      if (kind === 'tool') {
+        name = a[`${ATTR_PREFIX}name`] ?? a['gen_ai.tool.name'] ?? String(sp.name).replace(/^execute_tool\s+/, '');
+        attrs['tool.category'] ??= categorizeTool(name);
+        attrs['tool.phase'] ??= phaseOf(name, undefined, attrs['tool.category']);
+      }
+      const code = sp.status?.code;
+      const status = code === 2 || code === 'STATUS_CODE_ERROR' ? 'error' : code === 1 || code === 'STATUS_CODE_OK' ? 'ok' : 'unset';
+      if (status === 'error' && sp.status?.message) attrs['error.message'] ??= sp.status.message;
+      const span = {
+        id: idMap.get(sp.spanId),
+        parentId: hasParent ? idMap.get(sp.parentSpanId) : null,
+        kind,
+        name,
+        start: nanosToMs(sp.startTimeUnixNano),
+        end: nanosToMs(sp.endTimeUnixNano),
+        status,
+        attrs,
+      };
+      if (a[`${ATTR_PREFIX}input`] !== undefined) span.input = a[`${ATTR_PREFIX}input`];
+      if (a[`${ATTR_PREFIX}output`] !== undefined) span.output = a[`${ATTR_PREFIX}output`];
+      addSpan(trace, span);
+      for (const ev of sp.events ?? []) {
+        if (ev.name === `${ATTR_PREFIX}inflection`) continue; // recomputed by the analyzer
+        const ea = attrsToObject(ev.attributes);
+        const evKind = ev.name.startsWith(ATTR_PREFIX) ? ev.name.slice(ATTR_PREFIX.length) : ev.name === 'exception' ? 'error' : 'event';
+        trace.events.push({
+          time: nanosToMs(ev.timeUnixNano),
+          kind: evKind,
+          label: ea.label ?? ea['exception.message'] ?? ev.name,
+          spanId: span.id,
+          detail: ea.detail,
+        });
+      }
+    }
+    finalizeTrace(trace);
+    if (!trace.title) trace.title = trace.spans.find((s) => !s.parentId)?.name ?? `Trace ${traceId.slice(0, 8)}`;
+    traces.push(trace);
+  }
+  return traces.sort((a, b) => b.spans.length - a.spans.length);
+}
+
+// ---- adapters/registry.mjs ----
+// Adapter registry. An adapter turns some file format into normalized traces.
+// To support a new agent (e.g. GitHub Copilot hook logs), register { id, label, detect, parse }.
+
+
+
+
+const ADAPTERS = [];
+
+function registerAdapter(adapter) {
+  for (const key of ['id', 'detect', 'parse']) {
+    if (!adapter?.[key]) throw new Error(`adapter is missing "${key}"`);
+  }
+  const existing = ADAPTERS.findIndex((a) => a.id === adapter.id);
+  if (existing >= 0) ADAPTERS.splice(existing, 1, adapter);
+  else ADAPTERS.push(adapter);
+}
+
+function listAdapters() {
+  return ADAPTERS.map(({ id, label }) => ({ id, label }));
+}
+
+registerAdapter({
+  id: 'agent-trace',
+  label: 'agent-trace JSON',
+  detect: (text) => /^\s*\{\s*"schema"\s*:\s*\d+/.test(text.slice(0, 200)) || /^\s*\[\s*\{\s*"schema"\s*:/.test(text.slice(0, 200)),
+  parse: (text) => {
+    const doc = JSON.parse(text);
+    return Array.isArray(doc) ? doc : [doc];
+  },
+});
+registerAdapter({ id: 'otlp', label: 'OpenTelemetry OTLP/JSON', detect: looksLikeOtlp, parse: (text) => fromOtlp(text) });
+registerAdapter({
+  id: 'claude-code',
+  label: 'Claude Code transcript (.jsonl)',
+  detect: looksLikeClaudeTranscript,
+  parse: (text, opts) => [parseClaudeTranscript(text, opts)],
+});
+
+/** Detect the format, parse, and validate. Throws with a readable message on failure. */
+function parseAny(text, options = {}) {
+  const adapter = options.adapter
+    ? ADAPTERS.find((a) => a.id === options.adapter)
+    : ADAPTERS.find((a) => {
+        try {
+          return a.detect(text, options.fileName);
+        } catch {
+          return false;
+        }
+      });
+  if (!adapter) {
+    throw new Error(`Unrecognized format${options.fileName ? ` in ${options.fileName}` : ''}. Supported: ${ADAPTERS.map((a) => a.label).join(', ')}.`);
+  }
+  const traces = adapter.parse(text, options);
+  if (!traces.length) throw new Error('The file contains no traces.');
+  for (const t of traces) {
+    if (t.schema !== undefined && t.schema > SCHEMA_VERSION) throw new Error(`Trace schema ${t.schema} is newer than this viewer supports (${SCHEMA_VERSION}).`);
+    const problems = validateTrace(t);
+    if (problems.length) throw new Error(`Invalid trace "${t.title ?? t.id}": ${problems.slice(0, 3).join('; ')}`);
+  }
+  return { adapter: adapter.id, traces };
+}
+
+// ---- core/analysis.mjs ----
+// Analysis over a normalized trace: summary statistics and "inflection points", the moments
+// where the agent's course changed. They're inferred from behavior (errors, pivots, heavy
+// thinking, user steering) because raw reasoning text is usually not available.
+
+
+
+const INFLECTION_KINDS = {
+  recovery: { label: 'Recovered from error', group: 'error' },
+  retry: { label: 'Retried after error', group: 'error' },
+  error: { label: 'Unresolved error', group: 'error' },
+  pivot: { label: 'Changed phase', group: 'pivot' },
+  thinking: { label: 'Heavy thinking', group: 'thinking' },
+  slow: { label: 'Slow model call', group: 'thinking' },
+  interjection: { label: 'User steered', group: 'user' },
+  interrupt: { label: 'User interrupted', group: 'user' },
+  milestone: { label: 'Milestone', group: 'milestone' },
+  compaction: { label: 'Context compacted', group: 'system' },
+};
+
+const byStart = (a, b) => a.start - b.start;
+
+/** Tool input as an object; imported traces (e.g. via OTLP) carry it as a JSON string. */
+function inputObject(span) {
+  const v = span.input;
+  if (v && typeof v === 'object') return v;
+  if (typeof v === 'string' && v.trim().startsWith('{')) {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function sameInput(a, b) {
+  return JSON.stringify(a.input ?? null) === JSON.stringify(b.input ?? null);
+}
+
+function groupByParent(spans) {
+  const map = new Map();
+  for (const s of spans) {
+    const k = s.parentId ?? '';
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(s);
+  }
+  return map;
+}
+
+function errorInflections(tools, out) {
+  for (const [, list] of groupByParent(tools)) {
+    list.sort(byStart);
+    list.forEach((s) => {
+      if (s.status !== 'error') return;
+      // what the agent did once it saw the failure (calls already running in parallel don't count)
+      const next = list.find((x) => x !== s && x.start >= s.end);
+      const detail = s.attrs?.['error.message'];
+      if (next && next.name === s.name && sameInput(next, s)) {
+        out.push({ kind: 'retry', spanId: next.id, time: next.start, label: `Retried ${s.name}${next.status === 'error' ? ' (failed again)' : ''}`, detail });
+      } else if (next) {
+        out.push({ kind: 'recovery', spanId: s.id, time: s.end, label: `${s.name} failed, then ${next.name}`, detail });
+      } else {
+        out.push({ kind: 'error', spanId: s.id, time: s.end, label: `${s.name} failed`, detail });
+      }
+    });
+  }
+}
+
+/** Runs of explore/build/verify per turn, smoothed so a single stray call isn't a "pivot". */
+function pivotInflections(tools, out) {
+  for (const [, list] of groupByParent(tools)) {
+    const phased = list.sort(byStart).filter((s) => s.attrs?.['tool.phase']);
+    const runs = [];
+    for (const s of phased) {
+      const p = s.attrs['tool.phase'];
+      const last = runs[runs.length - 1];
+      if (last && last.phase === p) last.spans.push(s);
+      else runs.push({ phase: p, spans: [s] });
+    }
+    // drop 1-call blips between runs of the same phase, then merge neighbours again
+    const smooth = runs.filter((r, i) => !(r.spans.length === 1 && runs[i - 1] && runs[i + 1] && runs[i - 1].phase === runs[i + 1].phase));
+    const merged = [];
+    for (const r of smooth) {
+      const last = merged[merged.length - 1];
+      if (last && last.phase === r.phase) last.spans.push(...r.spans);
+      else merged.push({ phase: r.phase, spans: [...r.spans] });
+    }
+    for (let i = 1; i < merged.length; i++) {
+      const from = merged[i - 1];
+      const to = merged[i];
+      if (from.spans.length < 2 && i - 1 > 0) continue;
+      const first = to.spans[0];
+      out.push({ kind: 'pivot', spanId: first.id, time: first.start, label: `${PHASE_LABELS[from.phase]} → ${PHASE_LABELS[to.phase]}` });
+    }
+  }
+}
+
+function thinkingInflections(llms, out) {
+  const thinking = llms.map((s) => s.attrs?.['llm.tokens.thinking'] ?? 0).filter((n) => n > 0);
+  if (thinking.length) {
+    const threshold = Math.max(1500, percentile(thinking, 90));
+    for (const s of llms) {
+      const n = s.attrs?.['llm.tokens.thinking'] ?? 0;
+      if (n >= threshold) out.push({ kind: 'thinking', spanId: s.id, time: s.start, label: `Thought for ${n.toLocaleString('en-US')} tokens`, value: n });
+    }
+    return;
+  }
+  // No reasoning-token data (e.g. imported traces): fall back to unusually slow calls.
+  const durations = llms.map((s) => s.end - s.start);
+  const threshold = Math.max(30000, percentile(durations, 90) * 1.5);
+  for (const s of llms) {
+    const d = s.end - s.start;
+    if (d >= threshold) out.push({ kind: 'slow', spanId: s.id, time: s.start, label: `Model call took ${Math.round(d / 1000)}s`, value: d });
+  }
+}
+
+function findInflections(trace) {
+  const out = [];
+  const tools = trace.spans.filter((s) => s.kind === 'tool');
+  const llms = trace.spans.filter((s) => s.kind === 'llm');
+  errorInflections(tools, out);
+  pivotInflections(tools, out);
+  thinkingInflections(llms, out);
+  for (const e of trace.events) {
+    if (e.kind === 'interjection' || e.kind === 'interrupt' || e.kind === 'compaction') {
+      out.push({ kind: e.kind, spanId: e.spanId ?? null, time: e.time, label: e.label, detail: e.detail });
+    }
+  }
+  for (const s of tools) {
+    const input = inputObject(s);
+    if (/mark_chapter$/.test(s.name) && input) {
+      out.push({ kind: 'milestone', spanId: s.id, time: s.start, label: String(input.title ?? 'Chapter'), detail: input.summary });
+    } else if (s.name === 'ExitPlanMode') {
+      out.push({ kind: 'milestone', spanId: s.id, time: s.start, label: 'Plan presented' });
+    }
+  }
+  out.sort((a, b) => a.time - b.time);
+  return out.map((inf, i) => ({ id: `inf-${i + 1}`, ...inf }));
+}
+
+/** Total length of the union of [start, end) intervals. */
+function unionDuration(intervals) {
+  const sorted = intervals.filter((iv) => iv.end > iv.start).sort((a, b) => a.start - b.start);
+  let total = 0;
+  let curStart = null;
+  let curEnd = null;
+  for (const iv of sorted) {
+    if (curEnd === null || iv.start > curEnd) {
+      if (curEnd !== null) total += curEnd - curStart;
+      curStart = iv.start;
+      curEnd = iv.end;
+    } else if (iv.end > curEnd) curEnd = iv.end;
+  }
+  if (curEnd !== null) total += curEnd - curStart;
+  return total;
+}
+
+function computeStats(trace) {
+  const spans = trace.spans;
+  const llms = spans.filter((s) => s.kind === 'llm');
+  const tools = spans.filter((s) => s.kind === 'tool');
+  const sum = (key) => llms.reduce((n, s) => n + (Number(s.attrs?.[key]) || 0), 0);
+  const byCategory = {};
+  const byTool = {};
+  for (const t of tools) {
+    const c = t.attrs?.['tool.category'] ?? 'other';
+    const d = t.end - t.start;
+    byCategory[c] ??= { count: 0, time: 0, errors: 0 };
+    byCategory[c].count++;
+    byCategory[c].time += d;
+    byTool[t.name] ??= { name: t.name, category: c, count: 0, time: 0, errors: 0 };
+    byTool[t.name].count++;
+    byTool[t.name].time += d;
+    if (t.status === 'error') {
+      byCategory[c].errors++;
+      byTool[t.name].errors++;
+    }
+  }
+  return {
+    wallTime: trace.end - trace.start,
+    activeTime: unionDuration(spans.filter((s) => s.kind === 'llm' || s.kind === 'tool')),
+    modelTime: unionDuration(llms),
+    toolTime: unionDuration(tools),
+    turns: spans.filter((s) => s.kind === 'turn').length,
+    llmCalls: llms.length,
+    toolCalls: tools.length,
+    subagents: spans.filter((s) => s.kind === 'agent').length,
+    errors: tools.filter((t) => t.status === 'error').length,
+    tokens: {
+      input: sum('llm.tokens.input'),
+      cacheRead: sum('llm.tokens.cache_read'),
+      cacheWrite: sum('llm.tokens.cache_write'),
+      output: sum('llm.tokens.output'),
+      thinking: sum('llm.tokens.thinking'),
+      peakContext: llms.reduce((m, s) => Math.max(m, Number(s.attrs?.['llm.tokens.context']) || 0), 0),
+    },
+    models: [...new Set(llms.map((s) => s.attrs?.['llm.model']).filter(Boolean))],
+    byCategory,
+    topTools: Object.values(byTool).sort((a, b) => b.count - a.count || b.time - a.time),
+  };
+}
+
+// ---- viewer/format.mjs ----
+// Formatting and DOM helpers for the viewer.
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function fmtDuration(ms) {
+  if (!Number.isFinite(ms)) return '–';
+  if (ms < 1) return '<1ms';
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  const s = ms / 1000;
+  if (s < 10) return `${s.toFixed(1)}s`;
+  if (s < 60) return `${Math.round(s)}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${String(Math.round(s % 60)).padStart(2, '0')}s`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ${String(m % 60).padStart(2, '0')}m`;
+  return `${Math.floor(h / 24)}d ${h % 24}h`;
+}
+
+function fmtTokens(n) {
+  if (!Number.isFinite(n) || n === 0) return '0';
+  if (n < 1000) return String(n);
+  if (n < 1e6) return `${(n / 1000).toFixed(n < 10000 ? 1 : 0)}k`;
+  return `${(n / 1e6).toFixed(n < 1e7 ? 2 : 1)}M`;
+}
+
+function fmtNumber(n) {
+  return Number.isFinite(n) ? n.toLocaleString() : '–';
+}
+
+function fmtClock(t, withDate = false) {
+  const d = new Date(t);
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return withDate ? `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}` : time;
+}
+
+function fmtOffset(ms) {
+  return `+${fmtDuration(ms)}`;
+}
+
+/** Pretty-print a span input/output: objects as JSON, strings as-is. */
+function prettyValue(v) {
+  if (v == null) return '';
+  if (typeof v === 'string') {
+    const t = v.trim();
+    if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+      try {
+        return JSON.stringify(JSON.parse(t), null, 2);
+      } catch {
+        return v;
+      }
+    }
+    return v;
+  }
+  return JSON.stringify(v, null, 2);
+}
+
+function el(tag, attrs = {}, html = '') {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') node.className = v;
+    else node.setAttribute(k, v === true ? '' : v);
+  }
+  if (html) node.innerHTML = html;
+  return node;
+}
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function storageGet(key, fallback) {
+  try {
+    const v = localStorage.getItem(`agent-trace:${key}`);
+    return v == null ? fallback : JSON.parse(v);
+  } catch {
+    return fallback;
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    localStorage.setItem(`agent-trace:${key}`, JSON.stringify(value));
+  } catch {
+    // private mode or storage disabled: preferences just won't persist
+  }
+}
+
+const ICON_PATHS = {
+  logo: '<path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/><circle cx="17" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  open: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+  auto: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17h.01"/>',
+  fit: '<path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  chevron: '<path d="m9 6 6 6-6 6"/>',
+  search: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  alert: '<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  pivot: '<path d="M4 7h13l-3-3M20 17H7l3 3"/>',
+  retry: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  compress: '<path d="M4 12h16"/><path d="m9 7 3-3 3 3M9 17l3 3 3-3"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+};
+
+function icon(name, size = 16) {
+  return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] ?? ''}</svg>`;
+}
+
+const INFLECTION_ICONS = {
+  recovery: 'retry',
+  retry: 'retry',
+  error: 'alert',
+  pivot: 'pivot',
+  thinking: 'spark',
+  slow: 'spark',
+  interjection: 'user',
+  interrupt: 'user',
+  milestone: 'flag',
+  compaction: 'compress',
+};
+
+// ---- viewer/store.mjs ----
+// Tiny observable store. Components subscribe and re-render only for the keys they care about.
+
+
+
+function createStore(initial) {
+  let state = initial;
+  const subscribers = new Set();
+  return {
+    get: () => state,
+    set(patch) {
+      const changed = Object.keys(patch).filter((k) => state[k] !== patch[k]);
+      if (!changed.length) return;
+      state = { ...state, ...patch };
+      for (const fn of subscribers) fn(state, new Set(changed));
+    },
+    subscribe(fn) {
+      subscribers.add(fn);
+      return () => subscribers.delete(fn);
+    },
+  };
+}
+
+/** Everything derived from a trace once, up front, so rendering stays cheap. */
+function prepareTrace(trace) {
+  const { byId, children } = indexTrace(trace);
+  const inflections = findInflections(trace);
+  const stats = computeStats(trace);
+  const inflectionsBySpan = new Map();
+  for (const inf of inflections) {
+    if (!inf.spanId) continue;
+    if (!inflectionsBySpan.has(inf.spanId)) inflectionsBySpan.set(inf.spanId, []);
+    inflectionsBySpan.get(inf.spanId).push(inf);
+  }
+  const depth = new Map();
+  const walkDepth = (parentKey, d) => {
+    for (const s of children.get(parentKey) ?? []) {
+      depth.set(s.id, d);
+      walkDepth(s.id, d + 1);
+    }
+  };
+  walkDepth(null, 0);
+  const searchText = new Map();
+  const textFor = (s) => {
+    if (!searchText.has(s.id)) {
+      const io = (v) => (v == null ? '' : typeof v === 'string' ? v.slice(0, 4000) : JSON.stringify(v).slice(0, 4000));
+      searchText.set(s.id, `${s.name} ${s.attrs?.['tool.summary'] ?? ''} ${io(s.input)} ${io(s.output)}`.toLowerCase());
+    }
+    return searchText.get(s.id);
+  };
+  return { trace, byId, children, depth, inflections, inflectionsBySpan, stats, textFor };
+}
+
+function ancestorsOf(prepared, id) {
+  const out = [];
+  let cur = prepared.byId.get(id);
+  while (cur && cur.parentId && prepared.byId.has(cur.parentId)) {
+    cur = prepared.byId.get(cur.parentId);
+    out.unshift(cur);
+  }
+  return out;
+}
+
+// ---- viewer/timescale.mjs ----
+// Maps wall-clock time to "virtual" timeline time. Long idle stretches (the user away for
+// hours) are squeezed to a fixed width so the activity stays readable.
+
+const ACTIVE_KINDS = new Set(['llm', 'tool', 'agent', 'span']);
+
+function buildTimeScale(trace, { compressIdle = true, idleThresholdMs = 90000 } = {}) {
+  const start = trace.start;
+  const end = Math.max(trace.end, start + 1);
+  const T = [start];
+  const gaps = [];
+
+  if (compressIdle) {
+    const intervals = trace.spans
+      .filter((s) => ACTIVE_KINDS.has(s.kind))
+      .map((s) => [s.start, Math.max(s.end, s.start + 1)])
+      .concat(trace.events.map((e) => [e.time, e.time + 1]))
+      .sort((a, b) => a[0] - b[0]);
+    let busyEnd = start;
+    for (const [s, e] of intervals) {
+      if (s - busyEnd > idleThresholdMs) gaps.push({ t0: busyEnd, t1: s });
+      if (e > busyEnd) busyEnd = e;
+    }
+    if (end - busyEnd > idleThresholdMs) gaps.push({ t0: busyEnd, t1: end });
+  }
+
+  const idleTotal = gaps.reduce((n, g) => n + (g.t1 - g.t0), 0);
+  const busyTotal = end - start - idleTotal;
+  const gapWidth = Math.min(Math.max(busyTotal * 0.025, 4000), 45000);
+  const V = [0];
+  for (const g of gaps) {
+    if (g.t0 > T[T.length - 1]) {
+      V.push(V[V.length - 1] + (g.t0 - T[T.length - 1]));
+      T.push(g.t0);
+    }
+    g.v0 = V[V.length - 1];
+    V.push(g.v0 + gapWidth);
+    T.push(g.t1);
+    g.v1 = V[V.length - 1];
+  }
+  if (end > T[T.length - 1]) {
+    V.push(V[V.length - 1] + (end - T[T.length - 1]));
+    T.push(end);
+  }
+  if (T.length === 1) {
+    T.push(end);
+    V.push(end - start);
+  }
+
+  const seg = (arr, x) => {
+    let lo = 0;
+    let hi = arr.length - 2;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (arr[mid] <= x) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo;
+  };
+  const toV = (t) => {
+    if (t <= T[0]) return V[0] - (T[0] - t);
+    if (t >= T[T.length - 1]) return V[V.length - 1] + (t - T[T.length - 1]);
+    const i = seg(T, t);
+    const span = T[i + 1] - T[i];
+    return span <= 0 ? V[i] : V[i] + ((t - T[i]) * (V[i + 1] - V[i])) / span;
+  };
+  const fromV = (v) => {
+    if (v <= V[0]) return T[0] - (V[0] - v);
+    if (v >= V[V.length - 1]) return T[T.length - 1] + (v - V[V.length - 1]);
+    const i = seg(V, v);
+    const span = V[i + 1] - V[i];
+    return span <= 0 ? T[i] : T[i] + ((v - V[i]) * (T[i + 1] - T[i])) / span;
+  };
+  const inGap = (v) => gaps.some((g) => v > g.v0 && v < g.v1);
+  return { start, end, vStart: 0, vEnd: V[V.length - 1], toV, fromV, gaps, inGap, idleTotal };
+}
+
+// ---- viewer/timeline.mjs ----
+// Canvas timeline: lanes for turns, model calls, tools, moments (inflections) and context size.
+// Canvas keeps it fast with thousands of spans; all hit-testing is done in JS.
+
+
+
+
+const GUTTER = 92;
+const RIGHT_PAD = 14;
+const AXIS_H = 24;
+const TOOL_ROW_H = 11;
+const TOOL_ROW_GAP = 3;
+const MAX_TOOL_ROWS = 8;
+const MIN_BAR_PX = 2;
+const TICK_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1e3, 2e3, 5e3, 1e4, 15e3, 3e4, 6e4, 12e4, 3e5, 6e5, 9e5, 18e5, 36e5, 72e5, 108e5, 216e5, 432e5, 864e5];
+const LANE_KINDS = { turn: 'turns', llm: 'llm', tool: 'tools', agent: 'tools', span: 'tools' };
+
+function readPalette() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (name) => cs.getPropertyValue(name).trim();
+  const cat = {};
+  for (const c of Object.keys(CATEGORY_LABELS)) cat[c] = v(`--cat-${c}`);
+  return {
+    bg: v('--panel'), text: v('--text'), text2: v('--text-2'), text3: v('--text-3'), line: v('--line'), lineStrong: v('--line-strong'),
+    accent: v('--accent'), turn: v('--turn'), llm: v('--llm'), error: v('--error'), gap: v('--gap'), context: v('--accent'),
+    cat,
+    inf: { error: v('--inf-error'), pivot: v('--inf-pivot'), thinking: v('--inf-thinking'), user: v('--inf-user'), milestone: v('--inf-milestone'), system: v('--inf-system') },
+    font: `500 11px ${v('--font-ui')}`, fontSmall: `500 10px ${v('--font-ui')}`, fontLabel: `600 10.5px ${v('--font-ui')}`,
+  };
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+function drawInflectionShape(ctx, kind, x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  const group = INFLECTION_KINDS[kind]?.group;
+  if (group === 'error') {
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x + r, y + r * 0.85);
+    ctx.lineTo(x - r, y + r * 0.85);
+  } else if (group === 'pivot' || group === 'milestone') {
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x + r, y);
+    ctx.lineTo(x, y + r);
+    ctx.lineTo(x - r, y);
+  } else {
+    ctx.arc(x, y, r * 0.85, 0, Math.PI * 2);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Assign overlapping spans to rows (greedy interval packing). */
+function packRows(spans, maxRows) {
+  const rowEnds = [];
+  const rowOf = new Map();
+  for (const s of spans) {
+    let row = rowEnds.findIndex((end) => end <= s.start);
+    if (row < 0) {
+      if (rowEnds.length < maxRows) {
+        row = rowEnds.length;
+        rowEnds.push(0);
+      } else {
+        row = rowEnds.indexOf(Math.min(...rowEnds));
+      }
+    }
+    rowEnds[row] = Math.max(rowEnds[row], s.end);
+    rowOf.set(s.id, row);
+  }
+  return { rowOf, rows: Math.max(1, rowEnds.length) };
+}
+
+function createTimeline({ canvas, overview, tooltip, store, onSelect }) {
+  const ctx = canvas.getContext('2d');
+  const octx = overview.getContext('2d');
+  let palette = readPalette();
+  let layout = null; // lanes, packed rows, per-lane span lists for the current trace
+  let frame = 0;
+  let width = 0;
+  let height = 0;
+  let animation = null;
+  let overviewCache = null;
+
+  const plotW = () => Math.max(10, width - GUTTER - RIGHT_PAD);
+  const xOf = (v, view) => GUTTER + ((v - view.v0) / (view.v1 - view.v0)) * plotW();
+  const vOf = (x, view) => view.v0 + ((x - GUTTER) / plotW()) * (view.v1 - view.v0);
+
+  function buildLayout(state) {
+    const { prepared } = state;
+    if (!prepared) return null;
+    const lanes = { turns: [], llm: [], tools: [] };
+    for (const s of prepared.trace.spans) {
+      const lane = LANE_KINDS[s.kind];
+      if (lane) lanes[lane].push(s);
+    }
+    const packed = packRows(lanes.tools, MAX_TOOL_ROWS);
+    const toolsH = packed.rows * (TOOL_ROW_H + TOOL_ROW_GAP) + 8;
+    const defs = [
+      { id: 'turns', label: 'Turns', h: 26 },
+      { id: 'llm', label: 'Model', h: 24 },
+      { id: 'tools', label: 'Tools', h: toolsH },
+      { id: 'moments', label: 'Moments', h: 26 },
+      { id: 'context', label: 'Context', h: 48 },
+    ];
+    let y = AXIS_H;
+    for (const d of defs) {
+      d.y = y;
+      y += d.h;
+    }
+    const maxThinking = Math.max(1, ...lanes.llm.map((s) => s.attrs?.['llm.tokens.thinking'] ?? 0));
+    const maxContext = Math.max(1, ...lanes.llm.map((s) => s.attrs?.['llm.tokens.context'] ?? 0));
+    return { lanes, defs, packed, maxThinking, maxContext, totalH: y + 6 };
+  }
+
+  function laneAt(y) {
+    return layout?.defs.find((d) => y >= d.y && y < d.y + d.h) ?? null;
+  }
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    width = canvas.clientWidth;
+    height = layout ? layout.totalH : 200;
+    canvas.style.height = `${height}px`;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const ow = overview.clientWidth;
+    overview.width = Math.round(ow * dpr);
+    overview.height = Math.round(overview.clientHeight * dpr);
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function spanRect(s, lane, view, scale) {
+    const x0 = xOf(scale.toV(s.start), view);
+    const x1 = xOf(scale.toV(s.end), view);
+    let y = lane.y + 5;
+    let h = lane.h - 10;
+    if (lane.id === 'tools') {
+      const row = layout.packed.rowOf.get(s.id) ?? 0;
+      y = lane.y + 4 + row * (TOOL_ROW_H + TOOL_ROW_GAP);
+      h = TOOL_ROW_H;
+    }
+    const w = Math.max(MIN_BAR_PX, x1 - x0);
+    return { x: x0, y, w, h };
+  }
+
+  function colorFor(s) {
+    if (s.status === 'error') return palette.error;
+    if (s.kind === 'turn') return palette.turn;
+    if (s.kind === 'llm') return palette.llm;
+    if (s.kind === 'agent') return palette.cat.agent;
+    return palette.cat[s.attrs?.['tool.category'] ?? 'other'] || palette.cat.other;
+  }
+
+  function niceStep(view) {
+    const msPerPx = (view.v1 - view.v0) / plotW();
+    return TICK_STEPS.find((s) => s / msPerPx >= 84) ?? TICK_STEPS[TICK_STEPS.length - 1];
+  }
+
+  function drawAxis(view, scale) {
+    const step = niceStep(view);
+    const tA = scale.fromV(view.v0);
+    const tB = scale.fromV(view.v1);
+    // Busy segments in real time; ticks are round clock times inside them, never inside idle gaps.
+    const segments = [];
+    let cursor = scale.start;
+    for (const g of scale.gaps) {
+      segments.push([cursor, g.t0]);
+      cursor = g.t1;
+    }
+    segments.push([cursor, scale.end]);
+    ctx.font = palette.fontSmall;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = palette.text3;
+    ctx.strokeStyle = palette.line;
+    ctx.lineWidth = 1;
+    let lastX = -Infinity;
+    for (const [s0, s1] of segments) {
+      const lo = Math.max(s0, tA);
+      const hi = Math.min(s1, tB);
+      if (hi <= lo) continue;
+      for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) {
+        const x = Math.round(xOf(scale.toV(t), view)) + 0.5;
+        if (x - lastX < 60) continue;
+        lastX = x;
+        ctx.beginPath();
+        ctx.moveTo(x, AXIS_H - 5);
+        ctx.lineTo(x, height);
+        ctx.globalAlpha = 0.55;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        const d = new Date(t);
+        const label = step < 1000
+          ? `${d.getSeconds()}.${String(d.getMilliseconds()).padStart(3, '0')}s`
+          : step >= 60000
+            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : fmtClock(t);
+        ctx.fillText(label, x + 4, AXIS_H / 2);
+      }
+    }
+  }
+
+  function drawGaps(view, scale) {
+    for (const g of scale.gaps) {
+      const x0 = xOf(g.v0, view);
+      const x1 = xOf(g.v1, view);
+      if (x1 < GUTTER || x0 > width - RIGHT_PAD) continue;
+      const cx0 = Math.max(GUTTER, x0);
+      const cx1 = Math.min(width - RIGHT_PAD, x1);
+      ctx.fillStyle = palette.gap;
+      ctx.fillRect(cx0, AXIS_H, cx1 - cx0, height - AXIS_H);
+      if (x1 - x0 < 8) continue; // too narrow for edges: the tint alone reads better
+      ctx.strokeStyle = palette.lineStrong;
+      ctx.setLineDash([3, 3]);
+      for (const x of [x0, x1]) {
+        if (x < GUTTER || x > width - RIGHT_PAD) continue;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x) + 0.5, AXIS_H);
+        ctx.lineTo(Math.round(x) + 0.5, height);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      if (cx1 - cx0 > 46) {
+        ctx.save();
+        ctx.font = palette.fontSmall;
+        ctx.fillStyle = palette.text3;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${fmtDuration(g.t1 - g.t0)} idle`, (cx0 + cx1) / 2, AXIS_H / 2);
+        ctx.restore();
+      }
+    }
+  }
+
+  function draw() {
+    frame = 0;
+    const state = store.get();
+    const { prepared, view, scale, selectedId, hoverId } = state;
+    ctx.clearRect(0, 0, width, height);
+    if (!prepared || !layout || !view || !scale) return;
+    ctx.fillStyle = palette.bg;
+    ctx.fillRect(0, 0, width, height);
+
+    drawGaps(view, scale);
+    drawAxis(view, scale);
+
+    // lane backgrounds and labels
+    ctx.font = palette.fontLabel;
+    ctx.textBaseline = 'middle';
+    for (const lane of layout.defs) {
+      ctx.strokeStyle = palette.line;
+      ctx.beginPath();
+      ctx.moveTo(0, lane.y + 0.5);
+      ctx.lineTo(width, lane.y + 0.5);
+      ctx.stroke();
+      ctx.fillStyle = palette.text2;
+      ctx.fillText(lane.label, 14, lane.y + Math.min(lane.h, 26) / 2);
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(GUTTER, AXIS_H, plotW(), height - AXIS_H);
+    ctx.clip();
+
+    const visible = (r) => r.x + r.w >= GUTTER - 2 && r.x <= width;
+    const dimmed = state.matchIds; // Set of ids matching the current filter, or null
+    let selRect = null;
+    let hoverRect = null;
+    for (const lane of layout.defs) {
+      const list = layout.lanes[lane.id];
+      if (!list) continue;
+      const lastPx = new Map(); // row y -> last pixel column filled by a sub-pixel bar
+      for (const s of list) {
+        const r = spanRect(s, lane, view, scale);
+        if (!visible(r)) continue;
+        // Zoomed out, thousands of bars share a pixel: draw one per pixel column per row.
+        if (r.w <= MIN_BAR_PX && s.id !== selectedId && s.id !== hoverId && s.status !== 'error') {
+          const px = Math.floor(r.x);
+          if (lastPx.get(r.y) === px) continue;
+          lastPx.set(r.y, px);
+        }
+        let alpha = 1;
+        if (s.kind === 'turn') alpha = 0.32;
+        else if (s.kind === 'llm') alpha = 0.45 + 0.55 * Math.min(1, (s.attrs?.['llm.tokens.thinking'] ?? 0) / layout.maxThinking);
+        if (dimmed && !dimmed.has(s.id)) alpha *= 0.18;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = colorFor(s);
+        roundRect(ctx, r.x, r.y, r.w, r.h, 3);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        if (s.kind === 'turn' && r.w > 60) {
+          ctx.font = palette.font;
+          ctx.fillStyle = palette.text;
+          const label = s.name;
+          const maxChars = Math.floor((r.w - 12) / 6.2);
+          ctx.fillText(label.length > maxChars ? label.slice(0, Math.max(0, maxChars - 1)) + '…' : label, Math.max(r.x, GUTTER) + 6, r.y + r.h / 2);
+        }
+        if (s.id === selectedId) selRect = r;
+        if (s.id === hoverId) hoverRect = r;
+      }
+    }
+
+    // moments (inflections)
+    const moments = layout.defs.find((d) => d.id === 'moments');
+    for (const inf of prepared.inflections) {
+      const x = xOf(scale.toV(inf.time), view);
+      if (x < GUTTER - 8 || x > width + 8) continue;
+      const group = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
+      const isSel = state.selectedInflection === inf.id;
+      drawInflectionShape(ctx, inf.kind, x, moments.y + moments.h / 2, isSel ? 7 : 5.5, palette.inf[group]);
+    }
+
+    // context size: step area over model calls
+    const ctxLane = layout.defs.find((d) => d.id === 'context');
+    const pts = layout.lanes.llm
+      .filter((s) => s.attrs?.['llm.tokens.context'])
+      .map((s) => [xOf(scale.toV(s.start), view), s.attrs['llm.tokens.context']]);
+    if (pts.length) {
+      const base = ctxLane.y + ctxLane.h - 5;
+      const yOf = (n) => base - (n / layout.maxContext) * (ctxLane.h - 12);
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], base);
+      let prevY = base;
+      for (const [x, n] of pts) {
+        ctx.lineTo(x, prevY);
+        prevY = yOf(n);
+        ctx.lineTo(x, prevY);
+      }
+      ctx.lineTo(xOf(scale.toV(prepared.trace.end), view), prevY);
+      ctx.lineTo(xOf(scale.toV(prepared.trace.end), view), base);
+      ctx.closePath();
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = palette.context;
+      ctx.fill();
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = palette.context;
+      ctx.lineWidth = 1.25;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1;
+    }
+
+    if (hoverRect && hoverRect !== selRect) {
+      ctx.strokeStyle = palette.text2;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, hoverRect.x - 1, hoverRect.y - 1, hoverRect.w + 2, hoverRect.h + 2, 4);
+      ctx.stroke();
+    }
+    if (selRect) {
+      ctx.strokeStyle = palette.accent;
+      ctx.lineWidth = 2;
+      roundRect(ctx, selRect.x - 1.5, selRect.y - 1.5, selRect.w + 3, selRect.h + 3, 4);
+      ctx.stroke();
+      ctx.setLineDash([2, 3]);
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.7;
+      for (const x of [selRect.x, selRect.x + selRect.w]) {
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x) + 0.5, AXIS_H);
+        ctx.lineTo(Math.round(x) + 0.5, height);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+
+    // gutter divider
+    ctx.strokeStyle = palette.line;
+    ctx.beginPath();
+    ctx.moveTo(GUTTER - 6.5, AXIS_H);
+    ctx.lineTo(GUTTER - 6.5, height);
+    ctx.stroke();
+
+    drawOverview(state);
+  }
+
+  function drawOverview(state) {
+    const { prepared, view, scale } = state;
+    const w = overview.clientWidth;
+    const h = overview.clientHeight;
+    octx.clearRect(0, 0, w, h);
+    if (!prepared || !scale) return;
+    const full = { v0: scale.vStart, v1: scale.vEnd };
+    const ox = (v) => GUTTER + ((v - full.v0) / (full.v1 - full.v0)) * plotW();
+    // The overview content only changes with the trace, size or theme: paint it once, then blit.
+    const key = `${w}x${h}`;
+    if (!overviewCache || overviewCache.key !== key || overviewCache.layout !== layout || overviewCache.scale !== scale || overviewCache.palette !== palette) {
+      const dpr = window.devicePixelRatio || 1;
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * dpr));
+      c.height = Math.max(1, Math.round(h * dpr));
+      const cc = c.getContext('2d');
+      cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cc.fillStyle = palette.gap;
+      for (const g of scale.gaps) cc.fillRect(ox(g.v0), 0, Math.max(1, ox(g.v1) - ox(g.v0)), h);
+      cc.globalAlpha = 0.75;
+      let lastPx = -1;
+      for (const s of layout.lanes.tools) {
+        const x = ox(scale.toV(s.start));
+        const bw = ox(scale.toV(s.end)) - x;
+        if (bw < 1 && Math.floor(x) === lastPx && s.status !== 'error') continue;
+        lastPx = Math.floor(x);
+        cc.fillStyle = colorFor(s);
+        cc.fillRect(x, 6, Math.max(1, bw), h - 12);
+      }
+      overviewCache = { key, layout, scale, palette, canvas: c };
+    }
+    octx.drawImage(overviewCache.canvas, 0, 0, w, h);
+    const vx0 = ox(view.v0);
+    const vx1 = ox(view.v1);
+    octx.fillStyle = palette.accent;
+    octx.globalAlpha = 0.12;
+    octx.fillRect(vx0, 1, vx1 - vx0, h - 2);
+    octx.globalAlpha = 1;
+    octx.strokeStyle = palette.accent;
+    octx.lineWidth = 1.5;
+    roundRect(octx, vx0, 1, Math.max(4, vx1 - vx0), h - 2, 3);
+    octx.stroke();
+    octx.font = palette.fontLabel;
+    octx.fillStyle = palette.text3;
+    octx.textBaseline = 'middle';
+    octx.fillText('Overview', 14, h / 2);
+  }
+
+  function requestDraw() {
+    if (!frame) frame = requestAnimationFrame(draw);
+  }
+
+  function clampView(v0, v1) {
+    const { scale } = store.get();
+    const full = scale.vEnd - scale.vStart;
+    const pad = full * 0.03;
+    let span = Math.min(Math.max(v1 - v0, 20), full + pad * 2);
+    let a = v0;
+    if (a < scale.vStart - pad) a = scale.vStart - pad;
+    if (a + span > scale.vEnd + pad) a = scale.vEnd + pad - span;
+    return { v0: a, v1: a + span };
+  }
+
+  function setView(v0, v1, animate = false) {
+    const target = clampView(v0, v1);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!animate || reduce) {
+      animation = null;
+      store.set({ view: target });
+      return;
+    }
+    const from = store.get().view;
+    const t0 = performance.now();
+    const dur = 220;
+    animation = { target };
+    const step = (now) => {
+      if (animation?.target !== target) return;
+      const p = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      store.set({ view: { v0: from.v0 + (target.v0 - from.v0) * e, v1: from.v1 + (target.v1 - from.v1) * e } });
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function fit(animate = true) {
+    const { scale } = store.get();
+    if (!scale) return;
+    const pad = (scale.vEnd - scale.vStart) * 0.015;
+    setView(scale.vStart - pad, scale.vEnd + pad, animate);
+  }
+
+  function zoomToSpan(id) {
+    const { prepared, scale } = store.get();
+    const s = prepared?.byId.get(id);
+    if (!s) return;
+    const a = scale.toV(s.start);
+    const b = scale.toV(s.end);
+    const span = Math.max(b - a, 400);
+    setView(a - span * 0.35, a + span * 1.35, true);
+  }
+
+  /** Scroll horizontally so a span is visible without changing zoom. */
+  function reveal(id) {
+    const { prepared, scale, view } = store.get();
+    const s = prepared?.byId.get(id);
+    if (!s || !view) return;
+    const a = scale.toV(s.start);
+    const b = scale.toV(s.end);
+    if (a >= view.v0 && b <= view.v1) return;
+    const w = view.v1 - view.v0;
+    if (b - a > w) zoomToSpan(id);
+    else setView(a - w * 0.3, a + w * 0.7, true);
+  }
+
+  function hitTest(px, py) {
+    const { prepared, view, scale } = store.get();
+    if (!prepared || px < GUTTER) return null;
+    const lane = laneAt(py);
+    if (!lane) return null;
+    if (lane.id === 'moments') {
+      let best = null;
+      let bestD = 9;
+      for (const inf of prepared.inflections) {
+        const d = Math.abs(xOf(scale.toV(inf.time), view) - px);
+        if (d < bestD) {
+          bestD = d;
+          best = inf;
+        }
+      }
+      return best ? { inflection: best } : null;
+    }
+    if (lane.id === 'context') {
+      const t = scale.fromV(vOf(px, view));
+      const prev = layout.lanes.llm.filter((s) => s.start <= t && s.attrs?.['llm.tokens.context']).pop();
+      return prev ? { span: prev, context: true } : null;
+    }
+    const list = layout.lanes[lane.id] ?? [];
+    let best = null;
+    for (const s of list) {
+      const r = spanRect(s, lane, view, scale);
+      if (py < r.y - 2 || py > r.y + r.h + 2) continue;
+      if (px >= r.x - 3 && px <= r.x + r.w + 3) {
+        if (!best || r.w < best.w) best = { span: s, w: r.w };
+      }
+    }
+    return best ? { span: best.span } : null;
+  }
+
+  function showTooltip(hit, clientX, clientY) {
+    if (!hit) {
+      tooltip.hidden = true;
+      return;
+    }
+    let html;
+    if (hit.inflection) {
+      const inf = hit.inflection;
+      html = `<div class="tt-kicker">${escapeHtml(INFLECTION_KINDS[inf.kind]?.label ?? inf.kind)}</div><div class="tt-title">${escapeHtml(inf.label)}</div><div class="tt-meta">${fmtClock(inf.time)}</div>`;
+    } else {
+      const s = hit.span;
+      const a = s.attrs ?? {};
+      const lines = [];
+      if (hit.context) lines.push(`Context ${fmtTokens(a['llm.tokens.context'])} tokens`);
+      if (s.kind === 'llm') {
+        lines.push(`${fmtTokens(a['llm.tokens.context'] ?? 0)} in · ${fmtTokens(a['llm.tokens.output'] ?? 0)} out` + (a['llm.tokens.thinking'] ? ` · ${fmtTokens(a['llm.tokens.thinking'])} thinking` : ''));
+      }
+      if (s.kind === 'tool' && a['tool.summary']) lines.push(escapeHtml(a['tool.summary']));
+      if (s.status === 'error') lines.push(`<span class="tt-error">Failed: ${escapeHtml(a['error.message'] ?? 'error')}</span>`);
+      const kicker = s.kind === 'tool' ? CATEGORY_LABELS[a['tool.category']] ?? 'Tool' : s.kind === 'llm' ? 'Model call' : s.kind === 'turn' ? 'Turn' : s.kind;
+      html = `<div class="tt-kicker">${escapeHtml(kicker)}</div><div class="tt-title">${escapeHtml(s.name)}</div>` +
+        `<div class="tt-meta">${fmtDuration(s.end - s.start)} · ${fmtClock(s.start)}</div>` +
+        lines.map((l) => `<div class="tt-line">${l}</div>`).join('');
+    }
+    tooltip.innerHTML = html;
+    tooltip.hidden = false;
+    const pad = 14;
+    const r = tooltip.getBoundingClientRect();
+    let x = clientX + pad;
+    let y = clientY + pad;
+    if (x + r.width > window.innerWidth - 8) x = clientX - r.width - pad;
+    if (y + r.height > window.innerHeight - 8) y = clientY - r.height - pad;
+    tooltip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+
+  // --- interaction -----------------------------------------------------------------------
+  let drag = null;
+  const localXY = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    canvas.setPointerCapture(e.pointerId);
+    drag = { x: e.clientX, view: store.get().view, moved: false };
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const [x, y] = localXY(e);
+    if (drag) {
+      const dx = e.clientX - drag.x;
+      if (Math.abs(dx) > 3) drag.moved = true;
+      if (drag.moved) {
+        const dv = (dx / plotW()) * (drag.view.v1 - drag.view.v0);
+        setView(drag.view.v0 - dv, drag.view.v1 - dv);
+        canvas.classList.add('is-panning');
+        tooltip.hidden = true;
+      }
+      return;
+    }
+    const hit = hitTest(x, y);
+    store.set({ hoverId: hit?.span?.id ?? null });
+    canvas.style.cursor = hit ? 'pointer' : 'grab';
+    showTooltip(hit, e.clientX, e.clientY);
+  });
+  canvas.addEventListener('pointerup', (e) => {
+    canvas.classList.remove('is-panning');
+    if (drag && !drag.moved) {
+      const [x, y] = localXY(e);
+      const hit = hitTest(x, y);
+      if (hit?.inflection) onSelect({ spanId: hit.inflection.spanId, inflectionId: hit.inflection.id });
+      else if (hit?.span) onSelect({ spanId: hit.span.id });
+      else onSelect({ spanId: null });
+    }
+    drag = null;
+  });
+  canvas.addEventListener('pointerleave', () => {
+    tooltip.hidden = true;
+    if (store.get().hoverId) store.set({ hoverId: null });
+  });
+  canvas.addEventListener('dblclick', (e) => {
+    const [x, y] = localXY(e);
+    const hit = hitTest(x, y);
+    if (hit?.span) zoomToSpan(hit.span.id);
+    else fit();
+  });
+  canvas.addEventListener('wheel', (e) => {
+    const { view } = store.get();
+    if (!view) return;
+    e.preventDefault();
+    const w = view.v1 - view.v0;
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      const d = ((e.shiftKey ? e.deltaY : e.deltaX) / plotW()) * w;
+      setView(view.v0 + d, view.v1 + d);
+      return;
+    }
+    const [x] = localXY(e);
+    const anchor = vOf(Math.max(GUTTER, x), view);
+    const factor = Math.exp(e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0018));
+    const nw = w * factor;
+    const ratio = (anchor - view.v0) / w;
+    setView(anchor - nw * ratio, anchor + nw * (1 - ratio));
+  }, { passive: false });
+  canvas.addEventListener('keydown', (e) => {
+    const { view } = store.get();
+    if (!view) return;
+    const w = view.v1 - view.v0;
+    const mid = (view.v0 + view.v1) / 2;
+    const keys = {
+      '+': () => setView(mid - w * 0.35, mid + w * 0.35, true),
+      '=': () => setView(mid - w * 0.35, mid + w * 0.35, true),
+      '-': () => setView(mid - w * 0.7, mid + w * 0.7, true),
+      '0': () => fit(),
+      ArrowLeft: () => setView(view.v0 - w * 0.15, view.v1 - w * 0.15),
+      ArrowRight: () => setView(view.v0 + w * 0.15, view.v1 + w * 0.15),
+    };
+    if (keys[e.key]) {
+      e.preventDefault();
+      keys[e.key]();
+    }
+  });
+
+  let odrag = null;
+  const overviewV = (e) => {
+    const { scale } = store.get();
+    const r = overview.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    return scale.vStart + ((x - GUTTER) / plotW()) * (scale.vEnd - scale.vStart);
+  };
+  overview.addEventListener('pointerdown', (e) => {
+    const { view, scale } = store.get();
+    if (!scale) return;
+    overview.setPointerCapture(e.pointerId);
+    const v = overviewV(e);
+    const w = view.v1 - view.v0;
+    if (v < view.v0 || v > view.v1) setView(v - w / 2, v + w / 2);
+    const cur = store.get().view;
+    odrag = { v, view: cur };
+  });
+  overview.addEventListener('pointermove', (e) => {
+    if (!odrag) return;
+    const dv = overviewV(e) - odrag.v;
+    setView(odrag.view.v0 + dv, odrag.view.v1 + dv);
+  });
+  overview.addEventListener('pointerup', () => {
+    odrag = null;
+  });
+
+  const ro = new ResizeObserver(() => {
+    resize();
+    requestDraw();
+  });
+  ro.observe(canvas);
+  ro.observe(overview);
+
+  store.subscribe((state, changed) => {
+    if (changed.has('prepared') || changed.has('scale')) {
+      layout = buildLayout(state);
+      resize();
+    }
+    if (changed.has('theme')) palette = readPalette();
+    requestDraw();
+  });
+
+  function zoomBy(factor) {
+    const { view } = store.get();
+    if (!view) return;
+    const mid = (view.v0 + view.v1) / 2;
+    const half = ((view.v1 - view.v0) * factor) / 2;
+    setView(mid - half, mid + half, true);
+  }
+
+  return {
+    fit,
+    zoomBy,
+    zoomToSpan,
+    reveal,
+    refreshPalette() {
+      palette = readPalette();
+      requestDraw();
+    },
+  };
+}
+
+// ---- viewer/tree.mjs ----
+// Virtualized call tree. Only the rows in view are in the DOM, so huge sessions stay smooth.
+
+
+
+const ROW_H = 30;
+const OVERSCAN = 8;
+const INDENT = 16;
+
+function kindColorVar(s) {
+  if (s.status === 'error') return 'var(--error)';
+  if (s.kind === 'turn') return 'var(--turn-strong)';
+  if (s.kind === 'llm') return 'var(--llm)';
+  if (s.kind === 'agent') return 'var(--cat-agent)';
+  if (s.kind === 'session') return 'var(--text-3)';
+  return `var(--cat-${s.attrs?.['tool.category'] ?? 'other'})`;
+}
+
+/** Rows to show: depth-first, honouring collapsed nodes and the active filter. */
+function flattenRows(prepared, collapsed, matchIds) {
+  const rows = [];
+  const keep = matchIds ? new Set() : null;
+  if (matchIds) {
+    for (const id of matchIds) {
+      let cur = prepared.byId.get(id);
+      while (cur) {
+        if (keep.has(cur.id)) break;
+        keep.add(cur.id);
+        cur = cur.parentId ? prepared.byId.get(cur.parentId) : null;
+      }
+    }
+  }
+  const visit = (parentKey, depth) => {
+    for (const s of prepared.children.get(parentKey) ?? []) {
+      if (keep && !keep.has(s.id)) continue;
+      const kids = prepared.children.get(s.id) ?? [];
+      const isRoot = s.kind === 'session' && parentKey === null;
+      if (isRoot) {
+        visit(s.id, depth); // the session row adds nothing; show its turns at the top level
+        continue;
+      }
+      const expanded = matchIds ? true : !collapsed.has(s.id);
+      rows.push({ span: s, depth, hasChildren: kids.length > 0, expanded, dim: Boolean(matchIds && !matchIds.has(s.id)) });
+      if (kids.length && expanded) visit(s.id, depth + 1);
+    }
+  };
+  visit(null, 0);
+  return rows;
+}
+
+function createTree({ root, store, onSelect, onActivate }) {
+  root.innerHTML = '<div class="tree-viewport" role="tree" tabindex="0" aria-label="Call tree"><div class="tree-spacer"></div><div class="tree-rows"></div></div><div class="tree-empty" hidden>No spans match the current filter.</div>';
+  const viewport = root.querySelector('.tree-viewport');
+  const spacer = root.querySelector('.tree-spacer');
+  const rowsEl = root.querySelector('.tree-rows');
+  const empty = root.querySelector('.tree-empty');
+  let rows = [];
+  let rowIndex = new Map();
+  let frame = 0;
+
+  function rebuild() {
+    const { prepared, collapsed, matchIds } = store.get();
+    rows = prepared ? flattenRows(prepared, collapsed, matchIds) : [];
+    rowIndex = new Map(rows.map((r, i) => [r.span.id, i]));
+    spacer.style.height = `${rows.length * ROW_H}px`;
+    empty.hidden = rows.length > 0 || !prepared;
+    render();
+  }
+
+  function rangeFor(s, prepared, scale) {
+    // Mini-bar: where this span sits inside its turn (or inside the whole session for turns).
+    let frameSpan = prepared.trace;
+    if (s.kind !== 'turn') {
+      let cur = s;
+      while (cur.parentId && prepared.byId.get(cur.parentId)?.kind !== 'session' && prepared.byId.has(cur.parentId)) cur = prepared.byId.get(cur.parentId);
+      if (cur !== s) frameSpan = cur;
+    }
+    const f0 = scale.toV(frameSpan.start);
+    const f1 = Math.max(scale.toV(frameSpan.end), f0 + 1);
+    const a = (scale.toV(s.start) - f0) / (f1 - f0);
+    const b = (scale.toV(s.end) - f0) / (f1 - f0);
+    return [Math.max(0, Math.min(1, a)), Math.max(0.004, Math.min(1, b) - Math.max(0, a))];
+  }
+
+  function rowHtml(row, i, state) {
+    const { span: s, depth, hasChildren, expanded, dim } = row;
+    const { prepared, scale, selectedId } = state;
+    const a = s.attrs ?? {};
+    const infs = prepared.inflectionsBySpan.get(s.id) ?? [];
+    const badges = infs.slice(0, 3).map((inf) => {
+      const group = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
+      return `<span class="badge-inf" style="--c: var(--inf-${group})" title="${escapeHtml(inf.label)}">${icon(INFLECTION_ICONS[inf.kind] ?? 'spark', 12)}</span>`;
+    }).join('');
+    let detail = '';
+    if (s.kind === 'tool' || s.kind === 'agent') detail = a['tool.summary'] ?? '';
+    else if (s.kind === 'llm') {
+      const parts = [];
+      if (a['llm.tokens.output']) parts.push(`${fmtTokens(a['llm.tokens.output'])} out`);
+      if (a['llm.tokens.thinking']) parts.push(`${fmtTokens(a['llm.tokens.thinking'])} thinking`);
+      if (a['llm.tool_calls']) parts.push(`${a['llm.tool_calls']} tool call${a['llm.tool_calls'] > 1 ? 's' : ''}`);
+      detail = parts.join(' · ');
+    } else if (s.kind === 'turn') {
+      const kids = prepared.children.get(s.id) ?? [];
+      const tools = kids.filter((k) => k.kind === 'tool').length;
+      detail = `${tools} tool${tools === 1 ? '' : 's'}`;
+    }
+    const name = s.kind === 'llm' ? 'Model' : s.name;
+    const [left, width] = scale ? rangeFor(s, prepared, scale) : [0, 0];
+    const cls = ['tree-row', `kind-${s.kind}`, s.id === selectedId ? 'is-selected' : '', s.status === 'error' ? 'is-error' : '', dim ? 'is-dim' : ''].join(' ');
+    return `<div class="${cls}" role="treeitem" aria-level="${depth + 1}" ${hasChildren ? `aria-expanded="${expanded}"` : ''} aria-selected="${s.id === selectedId}" data-id="${escapeHtml(s.id)}" style="transform:translateY(${i * ROW_H}px)">` +
+      `<span class="tr-indent" style="width:${depth * INDENT}px"></span>` +
+      (hasChildren ? `<span class="tr-twisty${expanded ? ' is-open' : ''}" data-toggle="1">${icon('chevron', 14)}</span>` : '<span class="tr-twisty is-leaf"></span>') +
+      `<span class="tr-dot" style="--c:${kindColorVar(s)}"></span>` +
+      `<span class="tr-name">${escapeHtml(name)}</span>` +
+      `<span class="tr-detail">${escapeHtml(detail)}</span>` +
+      `<span class="tr-badges">${badges}</span>` +
+      `<span class="tr-bar" aria-hidden="true"><i style="left:${(left * 100).toFixed(2)}%;width:${(width * 100).toFixed(2)}%;background:${kindColorVar(s)}"></i></span>` +
+      `<span class="tr-dur">${fmtDuration(s.end - s.start)}</span>` +
+      '</div>';
+  }
+
+  function render() {
+    frame = 0;
+    const state = store.get();
+    if (!state.prepared) {
+      rowsEl.innerHTML = '';
+      return;
+    }
+    const top = viewport.scrollTop;
+    const h = viewport.clientHeight || 400;
+    const first = Math.max(0, Math.floor(top / ROW_H) - OVERSCAN);
+    const last = Math.min(rows.length, Math.ceil((top + h) / ROW_H) + OVERSCAN);
+    let html = '';
+    for (let i = first; i < last; i++) html += rowHtml(rows[i], i, state);
+    rowsEl.innerHTML = html;
+  }
+
+  const requestRender = () => {
+    if (!frame) frame = requestAnimationFrame(render);
+  };
+
+  function toggle(id, open) {
+    const { collapsed } = store.get();
+    const next = new Set(collapsed);
+    const isOpen = !collapsed.has(id);
+    if (open ?? !isOpen) next.delete(id);
+    else next.add(id);
+    store.set({ collapsed: next });
+  }
+
+  function scrollToId(id) {
+    const { prepared, collapsed } = store.get();
+    if (!prepared) return;
+    let cur = prepared.byId.get(id);
+    const next = new Set(collapsed);
+    let changed = false;
+    while (cur?.parentId) {
+      if (next.delete(cur.parentId)) changed = true;
+      cur = prepared.byId.get(cur.parentId);
+    }
+    if (changed) store.set({ collapsed: next });
+    const i = rowIndex.get(id);
+    if (i === undefined) return;
+    const top = i * ROW_H;
+    if (top < viewport.scrollTop + ROW_H) viewport.scrollTop = Math.max(0, top - ROW_H * 2);
+    else if (top > viewport.scrollTop + viewport.clientHeight - ROW_H * 2) viewport.scrollTop = top - viewport.clientHeight + ROW_H * 3;
+  }
+
+  viewport.addEventListener('scroll', requestRender, { passive: true });
+  rowsEl.addEventListener('click', (e) => {
+    const row = e.target.closest('.tree-row');
+    if (!row) return;
+    if (e.target.closest('[data-toggle]')) {
+      toggle(row.dataset.id);
+      return;
+    }
+    onSelect({ spanId: row.dataset.id, from: 'tree' });
+  });
+  rowsEl.addEventListener('dblclick', (e) => {
+    const row = e.target.closest('.tree-row');
+    if (row && !e.target.closest('[data-toggle]')) onActivate(row.dataset.id);
+  });
+  viewport.addEventListener('keydown', (e) => {
+    const { selectedId, prepared } = store.get();
+    if (!prepared || !rows.length) return;
+    let i = rowIndex.get(selectedId) ?? -1;
+    const row = rows[i];
+    const select = (j) => {
+      const r = rows[Math.max(0, Math.min(rows.length - 1, j))];
+      if (r) onSelect({ spanId: r.span.id, from: 'tree' });
+    };
+    switch (e.key) {
+      case 'ArrowDown': select(i + 1); break;
+      case 'ArrowUp': select(i < 0 ? 0 : i - 1); break;
+      case 'Home': select(0); break;
+      case 'End': select(rows.length - 1); break;
+      case 'PageDown': select(i + Math.floor(viewport.clientHeight / ROW_H)); break;
+      case 'PageUp': select(i - Math.floor(viewport.clientHeight / ROW_H)); break;
+      case 'ArrowRight':
+        if (row?.hasChildren && !row.expanded) toggle(row.span.id, true);
+        else if (row?.hasChildren) select(i + 1);
+        break;
+      case 'ArrowLeft':
+        if (row?.hasChildren && row.expanded) toggle(row.span.id, false);
+        else if (row?.span.parentId && rowIndex.has(row.span.parentId)) select(rowIndex.get(row.span.parentId));
+        break;
+      case 'Enter': if (row) onActivate(row.span.id); break;
+      default: return;
+    }
+    e.preventDefault();
+  });
+
+  new ResizeObserver(requestRender).observe(viewport);
+
+  store.subscribe((state, changed) => {
+    if (changed.has('prepared') || changed.has('collapsed') || changed.has('matchIds') || changed.has('scale')) rebuild();
+    else if (changed.has('selectedId') || changed.has('theme')) requestRender();
+    if (changed.has('selectedId') && state.selectedId) scrollToId(state.selectedId);
+  });
+
+  return {
+    focus: () => viewport.focus(),
+    expandAll: () => store.set({ collapsed: new Set() }),
+    collapseAll: () => {
+      const { prepared } = store.get();
+      store.set({ collapsed: new Set(prepared.trace.spans.filter((s) => s.kind === 'turn' || s.kind === 'agent' || (prepared.children.get(s.id)?.length && s.kind !== 'session')).map((s) => s.id)) });
+    },
+  };
+}
+
+// ---- viewer/panels.mjs ----
+// Side panel content: span details (drill-down) and session insights.
+
+
+
+
+
+const PREVIEW_CHARS = 6000;
+
+const KIND_LABELS = { session: 'Session', turn: 'Turn', llm: 'Model call', tool: 'Tool call', agent: 'Subagent', span: 'Span' };
+
+function colorVarFor(s) {
+  if (s.kind === 'turn') return 'var(--turn-strong)';
+  if (s.kind === 'llm') return 'var(--llm)';
+  if (s.kind === 'agent') return 'var(--cat-agent)';
+  if (s.kind === 'tool') return `var(--cat-${s.attrs?.['tool.category'] ?? 'other'})`;
+  return 'var(--text-3)';
+}
+
+/** Collects long text blocks so copy / expand buttons can reach the full content. */
+function blockCollector() {
+  const blocks = [];
+  const add = (title, text, { lang = '', open = true } = {}) => {
+    if (text == null || text === '') return '';
+    const full = String(text);
+    const i = blocks.push(full) - 1;
+    const shown = full.length > PREVIEW_CHARS ? full.slice(0, PREVIEW_CHARS) : full;
+    const more = full.length > PREVIEW_CHARS
+      ? `<button class="btn-link" data-expand="${i}">Show all ${fmtNumber(full.length)} characters</button>` : '';
+    return `<details class="d-block" ${open ? 'open' : ''}><summary><span>${escapeHtml(title)}</span>` +
+      `<button class="icon-btn sm" data-copy="${i}" title="Copy ${escapeHtml(title.toLowerCase())}" aria-label="Copy ${escapeHtml(title.toLowerCase())}">${icon('copy', 14)}</button></summary>` +
+      `<pre class="code ${lang}" data-block="${i}">${escapeHtml(shown)}</pre>${more}</details>`;
+  };
+  return { blocks, add };
+}
+
+function tokenBars(a) {
+  const ctx = a['llm.tokens.context'] ?? 0;
+  if (!ctx && !a['llm.tokens.output']) return '';
+  const read = a['llm.tokens.cache_read'] ?? 0;
+  const write = a['llm.tokens.cache_write'] ?? 0;
+  const fresh = a['llm.tokens.input'] ?? Math.max(0, ctx - read - write);
+  const out = a['llm.tokens.output'] ?? 0;
+  const think = Math.min(out, a['llm.tokens.thinking'] ?? 0);
+  const pct = (n, d) => (d ? ((n / d) * 100).toFixed(2) : 0);
+  const seg = (n, d, cls, label) => (n ? `<i class="${cls}" style="width:${pct(n, d)}%" title="${label}: ${fmtNumber(n)}"></i>` : '');
+  return `<div class="tok">
+    <div class="tok-row"><span class="tok-label">Context</span><span class="tok-bar">${seg(read, ctx, 'seg-cache', 'Cache read')}${seg(write, ctx, 'seg-write', 'Cache write')}${seg(fresh, ctx, 'seg-fresh', 'Fresh input')}</span><span class="tok-num">${fmtTokens(ctx)}</span></div>
+    <div class="tok-row"><span class="tok-label">Output</span><span class="tok-bar">${seg(think, out, 'seg-think', 'Thinking')}${seg(out - think, out, 'seg-out', 'Visible output')}</span><span class="tok-num">${fmtTokens(out)}</span></div>
+    <div class="tok-legend"><span><i class="seg-cache"></i>cache read ${fmtTokens(read)}</span><span><i class="seg-write"></i>cache write ${fmtTokens(write)}</span><span><i class="seg-fresh"></i>fresh ${fmtTokens(fresh)}</span><span><i class="seg-think"></i>thinking ${fmtTokens(think)}</span></div>
+  </div>`;
+}
+
+function inflectionItem(inf, { showTime = true } = {}) {
+  const group = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
+  return `<button class="inf-item" data-inflection="${escapeHtml(inf.id)}" data-span="${escapeHtml(inf.spanId ?? '')}" style="--c: var(--inf-${group})">` +
+    `<span class="inf-icon">${icon(INFLECTION_ICONS[inf.kind] ?? 'spark', 14)}</span>` +
+    `<span class="inf-text"><span class="inf-kind">${escapeHtml(INFLECTION_KINDS[inf.kind]?.label ?? inf.kind)}</span><span class="inf-label">${escapeHtml(inf.label)}</span></span>` +
+    (showTime ? `<span class="inf-time">${fmtClock(inf.time)}</span>` : '') +
+    '</button>';
+}
+
+function categoryStack(byCategory, total) {
+  const entries = Object.entries(byCategory).sort((a, b) => b[1].count - a[1].count);
+  if (!entries.length) return '';
+  return `<div class="stack" role="img" aria-label="Tool calls by category">${entries.map(([c, v]) => `<i style="width:${((v.count / total) * 100).toFixed(2)}%;background:var(--cat-${c})" title="${escapeHtml(CATEGORY_LABELS[c] ?? c)}: ${v.count}"></i>`).join('')}</div>` +
+    `<div class="legend">${entries.map(([c, v]) => `<span><i style="background:var(--cat-${c})"></i>${escapeHtml(CATEGORY_LABELS[c] ?? c)} <b>${v.count}</b></span>`).join('')}</div>`;
+}
+
+function childSummary(prepared, s) {
+  const all = [];
+  const walk = (id) => {
+    for (const c of prepared.children.get(id) ?? []) {
+      all.push(c);
+      walk(c.id);
+    }
+  };
+  walk(s.id);
+  const tools = all.filter((c) => c.kind === 'tool');
+  const llms = all.filter((c) => c.kind === 'llm');
+  if (!all.length) return '';
+  const byCategory = {};
+  for (const t of tools) {
+    const c = t.attrs?.['tool.category'] ?? 'other';
+    byCategory[c] ??= { count: 0 };
+    byCategory[c].count++;
+  }
+  const out = llms.reduce((n, l) => n + (l.attrs?.['llm.tokens.output'] ?? 0), 0);
+  const errors = tools.filter((t) => t.status === 'error').length;
+  return `<section class="d-section"><h3>Inside this ${s.kind === 'turn' ? 'turn' : 'span'}</h3>
+    <div class="mini-stats"><div><b>${llms.length}</b><span>model calls</span></div><div><b>${tools.length}</b><span>tool calls</span></div><div><b>${fmtTokens(out)}</b><span>output tokens</span></div><div class="${errors ? 'has-error' : ''}"><b>${errors}</b><span>errors</span></div></div>
+    ${tools.length ? categoryStack(byCategory, tools.length) : ''}</section>`;
+}
+
+function renderDetails(prepared, spanId) {
+  const s = prepared.byId.get(spanId);
+  if (!s) return { html: '', blocks: [] };
+  const a = s.attrs ?? {};
+  const { blocks, add } = blockCollector();
+  const crumbs = ancestorsOf(prepared, s.id)
+    .map((p) => `<button class="crumb" data-goto="${escapeHtml(p.id)}">${escapeHtml(p.kind === 'session' ? 'Session' : p.kind === 'llm' ? 'Model' : p.name)}</button>`)
+    .join(`<span class="crumb-sep">${icon('chevron', 12)}</span>`);
+  const facts = [
+    ['Started', fmtClock(s.start, true)],
+    ['Offset', fmtOffset(s.start - prepared.trace.start)],
+    ['Duration', fmtDuration(s.end - s.start)],
+  ];
+  if (s.kind === 'llm') {
+    if (a['llm.model']) facts.push(['Model', a['llm.model']]);
+    if (a['llm.stop_reason']) facts.push(['Stopped', a['llm.stop_reason']]);
+    if (a['llm.tool_calls']) facts.push(['Tool calls', a['llm.tool_calls']]);
+  }
+  if (s.kind === 'tool') {
+    facts.push(['Category', CATEGORY_LABELS[a['tool.category']] ?? a['tool.category'] ?? '–']);
+    if (a['tool.phase']) facts.push(['Phase', PHASE_LABELS[a['tool.phase']]]);
+  }
+  const infs = prepared.inflectionsBySpan.get(s.id) ?? [];
+  const status = s.status === 'error' ? '<span class="status is-error">Failed</span>' : s.status === 'ok' ? '<span class="status is-ok">OK</span>' : '';
+
+  const siblings = (prepared.children.get(s.parentId && prepared.byId.has(s.parentId) ? s.parentId : null) ?? []).filter((x) => x.kind !== 'session');
+  const idx = siblings.indexOf(s);
+  const prev = siblings[idx - 1];
+  const next = siblings[idx + 1];
+
+  let body = '';
+  if (s.kind === 'turn' || s.kind === 'session') body += add('Prompt', s.input);
+  if (s.kind === 'llm') {
+    body += tokenBars(a);
+    body += add('Response', s.output);
+    if (a['llm.thinking']) body += add('Thinking', a['llm.thinking'], { open: false });
+    else if (a['llm.thinking_blocks']) body += '<p class="note">Reasoning happened here, but its text isn\'t stored in the transcript. The token count above shows how much.</p>';
+  }
+  if (s.kind === 'tool' || s.kind === 'agent' || s.kind === 'span') {
+    body += add('Input', prettyValue(s.input), { lang: 'json' });
+    body += add(s.status === 'error' ? 'Error' : 'Output', prettyValue(s.output));
+  }
+  if (s.kind === 'turn' || s.kind === 'agent' || s.kind === 'session') body += childSummary(prepared, s);
+
+  const attrRows = Object.entries(a)
+    .filter(([k]) => k !== 'llm.thinking')
+    .map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(typeof v === 'string' ? v : JSON.stringify(v))}</td></tr>`)
+    .join('');
+
+  const html = `<div class="details">
+    <div class="d-head">
+      <span class="kind-pill" style="--c:${colorVarFor(s)}">${escapeHtml(KIND_LABELS[s.kind] ?? s.kind)}</span>${status}
+      <span class="d-nav">
+        <button class="icon-btn sm" ${prev ? `data-goto="${escapeHtml(prev.id)}"` : 'disabled'} title="Previous sibling (k)" aria-label="Previous sibling"><span class="flip">${icon('chevron', 14)}</span></button>
+        <button class="icon-btn sm" ${next ? `data-goto="${escapeHtml(next.id)}"` : 'disabled'} title="Next sibling (j)" aria-label="Next sibling">${icon('chevron', 14)}</button>
+        <button class="icon-btn sm" data-zoom="${escapeHtml(s.id)}" title="Zoom timeline to this span (Enter)" aria-label="Zoom timeline to this span">${icon('fit', 14)}</button>
+      </span>
+    </div>
+    <h2 class="d-title">${escapeHtml(s.kind === 'llm' ? `Model call · ${a['llm.model'] ?? s.name}` : s.name)}</h2>
+    ${a['tool.summary'] && s.kind !== 'turn' ? `<p class="d-sub">${escapeHtml(a['tool.summary'])}</p>` : ''}
+    ${crumbs ? `<nav class="crumbs" aria-label="Ancestors">${crumbs}</nav>` : ''}
+    ${s.status === 'error' && a['error.message'] ? `<div class="callout is-error">${icon('alert', 14)}<span>${escapeHtml(a['error.message'])}</span></div>` : ''}
+    <dl class="facts">${facts.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join('')}</dl>
+    ${infs.length ? `<section class="d-section"><h3>Moments</h3><div class="inf-list">${infs.map((i) => inflectionItem(i, { showTime: false })).join('')}</div></section>` : ''}
+    ${body}
+    ${attrRows ? `<details class="d-block attrs"><summary><span>All attributes</span></summary><table>${attrRows}</table></details>` : ''}
+  </div>`;
+  return { html, blocks };
+}
+
+function renderInsights(prepared, groupFilter = 'all') {
+  const st = prepared.stats;
+  const t = st.tokens;
+  const card = (label, value, sub = '', cls = '') => `<div class="card ${cls}"><span class="card-label">${label}</span><b class="card-value">${value}</b>${sub ? `<span class="card-sub">${sub}</span>` : ''}</div>`;
+  const activePct = st.wallTime ? Math.round((st.activeTime / st.wallTime) * 100) : 0;
+  const groups = [['all', 'All'], ['error', 'Errors'], ['pivot', 'Pivots'], ['thinking', 'Thinking'], ['user', 'User'], ['milestone', 'Milestones']];
+  const counts = {};
+  for (const inf of prepared.inflections) {
+    const g = INFLECTION_KINDS[inf.kind]?.group ?? 'system';
+    counts[g] = (counts[g] ?? 0) + 1;
+  }
+  const shown = prepared.inflections.filter((inf) => groupFilter === 'all' || INFLECTION_KINDS[inf.kind]?.group === groupFilter);
+  const maxCount = Math.max(1, ...st.topTools.map((x) => x.count));
+  const toolRows = st.topTools.slice(0, 12).map((x) => `<tr data-tool="${escapeHtml(x.name)}">
+      <td><span class="dot" style="background:var(--cat-${x.category})"></span>${escapeHtml(x.name)}</td>
+      <td class="num"><span class="bar-cell"><i style="width:${((x.count / maxCount) * 100).toFixed(1)}%;background:var(--cat-${x.category})"></i></span>${x.count}</td>
+      <td class="num">${fmtDuration(x.time)}</td>
+      <td class="num ${x.errors ? 'has-error' : ''}">${x.errors || ''}</td></tr>`).join('');
+
+  return `<div class="insights">
+    <section class="cards">
+      ${card('Active time', fmtDuration(st.activeTime), `${activePct}% of ${fmtDuration(st.wallTime)} wall time`)}
+      ${card('Model time', fmtDuration(st.modelTime), `${st.llmCalls} calls`)}
+      ${card('Tool time', fmtDuration(st.toolTime), `${st.toolCalls} calls`)}
+      ${card('Errors', st.errors, st.errors ? 'failed tool calls' : 'none', st.errors ? 'has-error' : '')}
+      ${card('Output', fmtTokens(t.output), `${fmtTokens(t.thinking)} thinking`)}
+      ${card('Peak context', fmtTokens(t.peakContext), `${fmtTokens(t.cacheRead)} read from cache`)}
+    </section>
+    <section class="d-section">
+      <h3>Moments <span class="count">${prepared.inflections.length}</span></h3>
+      <div class="chips" role="group" aria-label="Filter moments">${groups.map(([g, label]) => `<button class="chip ${groupFilter === g ? 'is-on' : ''}" data-inf-group="${g}" ${g !== 'all' ? `style="--c: var(--inf-${g})"` : ''}>${label}${g === 'all' ? '' : ` <span class="chip-n">${counts[g] ?? 0}</span>`}</button>`).join('')}</div>
+      <div class="inf-list">${shown.length ? shown.map((i) => inflectionItem(i)).join('') : '<p class="note">Nothing in this group.</p>'}</div>
+    </section>
+    ${st.toolCalls ? `<section class="d-section">
+      <h3>Tools</h3>
+      ${categoryStack(st.byCategory, st.toolCalls)}
+      <table class="tools-table"><thead><tr><th>Tool</th><th class="num">Calls</th><th class="num">Time</th><th class="num">Errors</th></tr></thead><tbody>${toolRows}</tbody></table>
+    </section>` : ''}
+    ${st.models.length ? `<p class="note">Models: ${st.models.map(escapeHtml).join(', ')}</p>` : ''}
+  </div>`;
+}
+
+// ---- viewer/app.mjs ----
+// Viewer entry point: wires the store, timeline, tree and side panel together.
+
+
+
+
+
+
+
+
+
+
+const THEMES = ['system', 'light', 'dark'];
+const LARGE_TRACE = 1500;
+
+function startApp() {
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+
+  const store = createStore({
+    traces: [],
+    traceIndex: 0,
+    prepared: null,
+    scale: null,
+    view: null,
+    selectedId: null,
+    selectedInflection: null,
+    hoverId: null,
+    collapsed: new Set(),
+    matchIds: null,
+    filters: { query: '', off: new Set(), errorsOnly: false, momentsOnly: false },
+    sideTab: 'insights',
+    infGroup: 'all',
+    theme: 0,
+    compressIdle: storageGet('compressIdle', true),
+  });
+
+  // --- theme ------------------------------------------------------------------------------
+  // ?theme=dark|light|system overrides the saved preference for this page view (handy for sharing)
+  const themeParam = new URLSearchParams(location.search).get('theme');
+  let themeMode = THEMES.includes(themeParam) ? themeParam : storageGet('theme', 'system');
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme() {
+    if (themeMode === 'system') delete root.dataset.theme;
+    else root.dataset.theme = themeMode;
+    const resolved = themeMode === 'system' ? (media.matches ? 'dark' : 'light') : themeMode;
+    $('btn-theme').innerHTML = icon(themeMode === 'system' ? 'auto' : resolved === 'dark' ? 'moon' : 'sun', 16);
+    $('btn-theme').title = `Theme: ${themeMode} (t)`;
+    $('btn-theme').setAttribute('aria-label', `Theme: ${themeMode}. Click to change.`);
+    store.set({ theme: store.get().theme + 1 });
+  }
+  media.addEventListener?.('change', () => themeMode === 'system' && applyTheme());
+  function cycleTheme() {
+    themeMode = THEMES[(THEMES.indexOf(themeMode) + 1) % THEMES.length];
+    storageSet('theme', themeMode);
+    applyTheme();
+  }
+
+  // --- components -------------------------------------------------------------------------
+  const select = ({ spanId, inflectionId = null, from = 'timeline' }) => {
+    store.set({ selectedId: spanId ?? null, selectedInflection: inflectionId, sideTab: spanId ? 'details' : store.get().sideTab });
+    if (spanId && from !== 'timeline') timeline.reveal(spanId);
+  };
+  const timeline = createTimeline({ canvas: $('timeline'), overview: $('overview'), tooltip: $('tooltip'), store, onSelect: select });
+  const tree = createTree({ root: $('tree'), store, onSelect: select, onActivate: (id) => timeline.zoomToSpan(id) });
+
+  // --- loading ----------------------------------------------------------------------------
+  function toast(message, kind = 'info') {
+    const t = $('toast');
+    t.textContent = message;
+    t.className = `toast is-${kind}`;
+    t.hidden = false;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => (t.hidden = true), kind === 'error' ? 7000 : 3000);
+  }
+
+  function showTrace(index) {
+    const { traces } = store.get();
+    const trace = traces[index];
+    if (!trace) return;
+    const prepared = prepareTrace(trace);
+    const scale = buildTimeScale(trace, { compressIdle: store.get().compressIdle });
+    const collapsed = trace.spans.length > LARGE_TRACE
+      ? new Set(trace.spans.filter((s) => s.kind === 'turn' || s.kind === 'agent').map((s) => s.id))
+      : new Set();
+    store.set({ traceIndex: index, prepared, scale, collapsed, selectedId: null, selectedInflection: null, hoverId: null, sideTab: 'insights' });
+    recomputeFilter();
+    renderHeader();
+    renderChips();
+    document.title = `${trace.title ?? 'Trace'} · agent-trace`;
+    $('app').dataset.state = 'ready';
+    timeline.fit(false);
+  }
+
+  function loadTraces(traces) {
+    store.set({ traces });
+    const picker = $('trace-picker');
+    picker.hidden = traces.length < 2;
+    picker.innerHTML = traces.map((t, i) => `<option value="${i}">${escapeHtml(t.title ?? t.id)} (${t.spans.length} spans)</option>`).join('');
+    showTrace(0);
+  }
+
+  async function openFile(file) {
+    try {
+      const text = await file.text();
+      const { traces } = parseAny(text, { fileName: file.name });
+      loadTraces(traces);
+      toast(`Opened ${file.name}`);
+    } catch (e) {
+      toast(e.message || String(e), 'error');
+    }
+  }
+
+  // --- header -----------------------------------------------------------------------------
+  function renderHeader() {
+    const { prepared } = store.get();
+    if (!prepared) return;
+    const { trace, stats } = prepared;
+    $('trace-title').textContent = trace.title ?? trace.id;
+    $('trace-title').title = trace.title ?? trace.id;
+    const meta = [trace.source === 'claude-code' ? 'Claude Code' : trace.source, fmtClock(trace.start, true)];
+    if (trace.meta?.cwd) meta.push(trace.meta.cwd);
+    $('trace-meta').textContent = meta.filter(Boolean).join(' · ');
+    const chip = (label, value, cls = '') => `<div class="stat ${cls}"><b>${value}</b><span>${label}</span></div>`;
+    $('stat-chips').innerHTML =
+      chip('active', fmtDuration(stats.activeTime)) +
+      chip('turns', stats.turns) +
+      chip('tool calls', stats.toolCalls) +
+      chip('output tokens', fmtTokens(stats.tokens.output)) +
+      chip('errors', stats.errors, stats.errors ? 'has-error' : '');
+    const cats = Object.keys(stats.byCategory);
+    $('tl-legend').innerHTML =
+      '<span><i style="background:var(--turn-strong)"></i>Turn</span><span><i style="background:var(--llm)"></i>Model</span>' +
+      cats.map((c) => `<span><i style="background:var(--cat-${c})"></i>${escapeHtml(CATEGORY_LABELS[c] ?? c)}</span>`).join('') +
+      '<span><i style="background:var(--error)"></i>Error</span>';
+  }
+
+  // --- filters ----------------------------------------------------------------------------
+  function renderChips() {
+    const { prepared, filters } = store.get();
+    if (!prepared) return;
+    const cats = Object.entries(prepared.stats.byCategory).sort((a, b) => b[1].count - a[1].count);
+    const chip = (key, label, n, color) =>
+      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}">${escapeHtml(label)}${n != null ? ` <span class="chip-n">${n}</span>` : ''}</button>`;
+    $('filter-chips').innerHTML =
+      chip('llm', 'Model', prepared.stats.llmCalls, 'var(--llm)') +
+      cats.map(([c, v]) => chip(c, CATEGORY_LABELS[c] ?? c, v.count, `var(--cat-${c})`)).join('') +
+      `<span class="chip-sep"></span>` +
+      `<button class="chip toggle ${filters.errorsOnly ? 'is-on' : ''}" data-toggle-filter="errorsOnly" aria-pressed="${filters.errorsOnly}" style="--c:var(--error)">Errors only</button>` +
+      `<button class="chip toggle ${filters.momentsOnly ? 'is-on' : ''}" data-toggle-filter="momentsOnly" aria-pressed="${filters.momentsOnly}" style="--c:var(--inf-pivot)">Moments only</button>`;
+  }
+
+  function recomputeFilter() {
+    const { prepared, filters } = store.get();
+    if (!prepared) return;
+    const q = filters.query.trim().toLowerCase();
+    const active = q || filters.off.size || filters.errorsOnly || filters.momentsOnly;
+    if (!active) {
+      store.set({ matchIds: null });
+      return;
+    }
+    const ids = new Set();
+    for (const s of prepared.trace.spans) {
+      if (s.kind === 'llm' && filters.off.has('llm')) continue;
+      if ((s.kind === 'tool' || s.kind === 'agent' || s.kind === 'span') && filters.off.has(s.attrs?.['tool.category'] ?? 'other')) continue;
+      if (filters.errorsOnly && s.status !== 'error') continue;
+      if (filters.momentsOnly && !prepared.inflectionsBySpan.has(s.id)) continue;
+      if (q && !prepared.textFor(s).includes(q)) continue;
+      ids.add(s.id);
+    }
+    store.set({ matchIds: ids });
+  }
+
+  $('filter-chips').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const filters = { ...store.get().filters, off: new Set(store.get().filters.off) };
+    if (b.dataset.filter) {
+      if (filters.off.has(b.dataset.filter)) filters.off.delete(b.dataset.filter);
+      else filters.off.add(b.dataset.filter);
+    } else if (b.dataset.toggleFilter) {
+      filters[b.dataset.toggleFilter] = !filters[b.dataset.toggleFilter];
+    }
+    store.set({ filters });
+    renderChips();
+    recomputeFilter();
+  });
+  $('search').addEventListener('input', debounce((e) => {
+    store.set({ filters: { ...store.get().filters, query: e.target.value } });
+    recomputeFilter();
+  }, 120));
+
+  // --- side panel -------------------------------------------------------------------------
+  let blocks = [];
+  function renderSide() {
+    const { prepared, selectedId, sideTab, infGroup } = store.get();
+    const body = $('side-body');
+    $('tab-details').setAttribute('aria-selected', String(sideTab === 'details'));
+    $('tab-insights').setAttribute('aria-selected', String(sideTab === 'insights'));
+    if (!prepared) {
+      body.innerHTML = '';
+      return;
+    }
+    if (sideTab === 'insights') {
+      body.innerHTML = renderInsights(prepared, infGroup);
+      blocks = [];
+    } else if (!selectedId) {
+      body.innerHTML = `<div class="placeholder">${icon('layers', 28)}<p>Select a span in the timeline or the tree to see its inputs, outputs, tokens and timing.</p><p class="note">Tip: <kbd>[</kbd> and <kbd>]</kbd> jump between moments.</p></div>`;
+      blocks = [];
+    } else {
+      const r = renderDetails(prepared, selectedId);
+      body.innerHTML = r.html;
+      blocks = r.blocks;
+    }
+    body.scrollTop = 0;
+  }
+  $('tab-details').addEventListener('click', () => store.set({ sideTab: 'details' }));
+  $('tab-insights').addEventListener('click', () => store.set({ sideTab: 'insights' }));
+  $('side-body').addEventListener('click', async (e) => {
+    const t = e.target.closest('button, tr[data-tool]');
+    if (!t) return;
+    if (t.dataset.goto) select({ spanId: t.dataset.goto, from: 'panel' });
+    else if (t.dataset.zoom) timeline.zoomToSpan(t.dataset.zoom);
+    else if (t.dataset.inflection) {
+      const span = t.dataset.span || null;
+      store.set({ selectedInflection: t.dataset.inflection });
+      if (span) {
+        select({ spanId: span, inflectionId: t.dataset.inflection, from: 'panel' });
+        timeline.zoomToSpan(span);
+      }
+    } else if (t.dataset.infGroup) store.set({ infGroup: t.dataset.infGroup });
+    else if (t.dataset.copy) {
+      e.preventDefault();
+      try {
+        await navigator.clipboard.writeText(blocks[Number(t.dataset.copy)] ?? '');
+        toast('Copied to clipboard');
+      } catch {
+        toast('Copy failed: clipboard access is blocked here', 'error');
+      }
+    } else if (t.dataset.expand) {
+      const pre = $('side-body').querySelector(`pre[data-block="${t.dataset.expand}"]`);
+      if (pre) pre.textContent = blocks[Number(t.dataset.expand)];
+      t.remove();
+    } else if (t.dataset.tool) {
+      $('search').value = t.dataset.tool;
+      store.set({ filters: { ...store.get().filters, query: t.dataset.tool } });
+      recomputeFilter();
+    }
+  });
+
+  store.subscribe((state, changed) => {
+    if (['prepared', 'selectedId', 'sideTab', 'infGroup'].some((k) => changed.has(k))) renderSide();
+  });
+
+  // --- moments navigation -----------------------------------------------------------------
+  function stepMoment(dir) {
+    const { prepared, selectedInflection, selectedId } = store.get();
+    if (!prepared?.inflections.length) return;
+    const list = prepared.inflections;
+    let i = list.findIndex((x) => x.id === selectedInflection);
+    if (i < 0) {
+      const t = selectedId ? prepared.byId.get(selectedId)?.start ?? 0 : dir > 0 ? -Infinity : Infinity;
+      i = dir > 0 ? list.findIndex((x) => x.time > t) - 1 : list.findIndex((x) => x.time >= t);
+      if (dir < 0 && i < 0) i = list.length;
+    }
+    const next = list[Math.max(0, Math.min(list.length - 1, i + dir))];
+    if (next.spanId) {
+      select({ spanId: next.spanId, inflectionId: next.id, from: 'moments' });
+      timeline.zoomToSpan(next.spanId);
+    } else store.set({ selectedInflection: next.id });
+  }
+
+  // --- toolbar & global events --------------------------------------------------------------
+  $('btn-open').addEventListener('click', () => $('file-input').click());
+  $('empty-open').addEventListener('click', () => $('file-input').click());
+  $('file-input').addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (f) openFile(f);
+    e.target.value = '';
+  });
+  $('trace-picker').addEventListener('change', (e) => showTrace(Number(e.target.value)));
+  $('btn-theme').addEventListener('click', cycleTheme);
+  $('btn-fit').addEventListener('click', () => timeline.fit());
+  $('btn-zoom-in').addEventListener('click', () => timeline.zoomBy(0.6));
+  $('btn-zoom-out').addEventListener('click', () => timeline.zoomBy(1 / 0.6));
+  $('btn-expand').addEventListener('click', () => tree.expandAll());
+  $('btn-collapse').addEventListener('click', () => tree.collapseAll());
+  const compress = $('opt-compress');
+  compress.checked = store.get().compressIdle;
+  compress.addEventListener('change', () => {
+    storageSet('compressIdle', compress.checked);
+    const { prepared } = store.get();
+    store.set({ compressIdle: compress.checked });
+    if (prepared) {
+      store.set({ scale: buildTimeScale(prepared.trace, { compressIdle: compress.checked }) });
+      timeline.fit(false);
+    }
+  });
+
+  const exportMenu = $('export-menu');
+  $('btn-export').addEventListener('click', (e) => {
+    e.stopPropagation();
+    exportMenu.hidden = !exportMenu.hidden;
+    $('btn-export').setAttribute('aria-expanded', String(!exportMenu.hidden));
+  });
+  document.addEventListener('click', () => {
+    exportMenu.hidden = true;
+  });
+  exportMenu.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-export]');
+    const { prepared } = store.get();
+    if (!b || !prepared) return;
+    const base = (prepared.trace.title ?? 'trace').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'trace';
+    const payload = b.dataset.export === 'otlp'
+      ? toOtlp(prepared.trace, { inflections: prepared.inflections })
+      : prepared.trace;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${base}.${b.dataset.export === 'otlp' ? 'otlp' : 'trace'}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    exportMenu.hidden = true;
+  });
+
+  const help = $('help');
+  $('btn-help').addEventListener('click', () => help.showModal());
+  help.addEventListener('click', (e) => {
+    if (e.target === help || e.target.closest('[data-close]')) help.close();
+  });
+
+  // drag & drop anywhere
+  let dragDepth = 0;
+  window.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    dragDepth++;
+    $('drop').hidden = false;
+  });
+  window.addEventListener('dragleave', () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) $('drop').hidden = true;
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    $('drop').hidden = true;
+    const f = e.dataTransfer?.files?.[0];
+    if (f) openFile(f);
+  });
+
+  // resizable timeline
+  const splitter = $('splitter');
+  const setTimelineHeight = (h) => {
+    const clamped = Math.max(120, Math.min(window.innerHeight * 0.7, h));
+    root.style.setProperty('--tl-h', `${Math.round(clamped)}px`);
+    return clamped;
+  };
+  setTimelineHeight(storageGet('timelineHeight', 300));
+  splitter.addEventListener('pointerdown', (e) => {
+    splitter.setPointerCapture(e.pointerId);
+    const startY = e.clientY;
+    const startH = parseFloat(getComputedStyle(root).getPropertyValue('--tl-h')) || 300;
+    const move = (ev) => setTimelineHeight(startH + ev.clientY - startY);
+    const up = (ev) => {
+      storageSet('timelineHeight', setTimelineHeight(startH + ev.clientY - startY));
+      splitter.removeEventListener('pointermove', move);
+      splitter.removeEventListener('pointerup', up);
+    };
+    splitter.addEventListener('pointermove', move);
+    splitter.addEventListener('pointerup', up);
+  });
+  splitter.addEventListener('keydown', (e) => {
+    const cur = parseFloat(getComputedStyle(root).getPropertyValue('--tl-h')) || 300;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      storageSet('timelineHeight', setTimelineHeight(cur + (e.key === 'ArrowDown' ? 24 : -24)));
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const typing = e.target.matches?.('input, textarea, select, [contenteditable]');
+    if (e.key === 'Escape') {
+      if (typing) e.target.blur();
+      else if (store.get().selectedId) store.set({ selectedId: null, selectedInflection: null });
+      exportMenu.hidden = true;
+      return;
+    }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey || !store.get().prepared) return;
+    const actions = {
+      '/': () => $('search').focus(),
+      t: cycleTheme,
+      f: () => timeline.fit(),
+      '?': () => help.showModal(),
+      ']': () => stepMoment(1),
+      '[': () => stepMoment(-1),
+      i: () => store.set({ sideTab: 'insights' }),
+      d: () => store.set({ sideTab: 'details' }),
+      j: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' })),
+      k: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' })),
+      Enter: () => store.get().selectedId && document.activeElement === document.body && timeline.zoomToSpan(store.get().selectedId),
+    };
+    if (actions[e.key]) {
+      e.preventDefault();
+      actions[e.key]();
+    }
+  });
+
+  applyTheme();
+
+  // embedded data from `agent-trace view`
+  const embedded = $('agent-trace-data')?.textContent.trim();
+  if (embedded && embedded !== 'null') {
+    try {
+      const payload = JSON.parse(embedded);
+      loadTraces(payload.traces ?? [payload]);
+    } catch (e) {
+      toast(`Could not read the embedded trace: ${e.message}`, 'error');
+    }
+  }
+}
+
+startApp();
+})();
+</script>
+</body>
+</html>
