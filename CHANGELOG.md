@@ -10,7 +10,8 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 
 ### Changed
 - Releases publish to npm through trusted publishing (OIDC, with provenance) rather than an access token. The workflow can be re-run for an existing tag and skips steps that are already done.
-- The README badge shows the live npm version, and the README now has step-by-step release instructions.
+- The README is now a short quick start. Development, tests and the release process moved to CONTRIBUTING.md; architecture, the OpenTelemetry mapping and performance moved to docs/architecture.md.
+- The README badge shows the live npm version.
 - GitHub Actions updated to checkout v7, setup-node v7 and CodeQL v4.
 
 ## [0.2.0] - 2026-10-03
