@@ -6,6 +6,8 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-03
+
 ### Changed
 - Releases publish to npm through trusted publishing (OIDC, with provenance) rather than an access token. The workflow can be re-run for an existing tag and skips steps that are already done.
 - The README badge shows the live npm version, and the README now has step-by-step release instructions.
@@ -46,6 +48,7 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 - CLI: `view`, `list`, `stats`, `export`, `send`, `build`.
 - Secret redaction by default; `--no-io` for shareable reports.
 
-[Unreleased]: https://github.com/jrootr/agent-trace/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/jrootr/agent-trace/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/jrootr/agent-trace/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/jrootr/agent-trace/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jrootr/agent-trace/releases/tag/v0.1.0
