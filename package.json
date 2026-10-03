@@ -1,6 +1,6 @@
 {
   "name": "@jrootr/agent-trace",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "See what your AI agent actually did: an interactive timeline and call tree for Claude Code sessions and OpenTelemetry traces, in one self-contained HTML file.",
   "type": "module",
   "license": "MIT",
