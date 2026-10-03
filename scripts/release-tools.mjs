@@ -49,7 +49,9 @@ if (cmd === 'notes') {
 } else if (cmd === 'version') {
   const v = version();
   fs.writeFileSync(file('CHANGELOG.md'), releaseChangelog(read('CHANGELOG.md'), v, new Date().toISOString().slice(0, 10)));
-  fs.writeFileSync(file('README.md'), setBadge(read('README.md'), 'version', v, '5b4ff5'));
+  const readme = read('README.md');
+  // the README may show the live npm badge instead of a static version badge
+  if (readme.includes('img.shields.io/badge/version-')) fs.writeFileSync(file('README.md'), setBadge(readme, 'version', v, '5b4ff5'));
   execFileSync(process.execPath, [file('scripts/build.mjs')], { stdio: 'inherit' });
   console.log(`prepared ${v}: changelog dated, badge and dist/ updated`);
 } else if (cmd === 'badges') {
