@@ -51,7 +51,7 @@ The screenshots show [`examples/demo-session.jsonl`](examples/demo-session.jsonl
 Requires **Node.js 18.17+**. There are no dependencies.
 
 ```bash
-git clone <this repo> agent-trace
+git clone https://github.com/jrootr/agent-trace.git
 cd agent-trace
 node bin/agent-trace.mjs view        # opens your most recent Claude Code session
 ```
@@ -60,6 +60,12 @@ Put the command on your PATH (`agent-trace …` from anywhere):
 
 ```bash
 npm link
+```
+
+Or run it straight from GitHub without cloning:
+
+```bash
+npx github:jrootr/agent-trace view
 ```
 
 Or skip the CLI entirely. Open `dist/agent-trace.html` in a browser and drag a file onto it.

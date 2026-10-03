@@ -5,6 +5,14 @@
   "type": "module",
   "license": "MIT",
   "author": "Jake Sweany",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jrootr/agent-trace.git"
+  },
+  "homepage": "https://github.com/jrootr/agent-trace#readme",
+  "bugs": {
+    "url": "https://github.com/jrootr/agent-trace/issues"
+  },
   "bin": {
     "agent-trace": "bin/agent-trace.mjs"
   },
