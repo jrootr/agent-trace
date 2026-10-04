@@ -6,6 +6,8 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-04
+
 ### Changed
 - **New layout: Session (left) and Selection (right).**
   - The left pane covers the whole run, with tabs for **Calls**, **Opportunities** (ranked once per session) and **Overview** (totals, time split, moments, tools).
@@ -65,7 +67,8 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 - CLI: `view`, `list`, `stats`, `export`, `send`, `build`.
 - Secret redaction by default; `--no-io` for shareable reports.
 
-[Unreleased]: https://github.com/jrootr/agent-trace/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/jrootr/agent-trace/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/jrootr/agent-trace/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/jrootr/agent-trace/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/jrootr/agent-trace/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jrootr/agent-trace/releases/tag/v0.1.0
