@@ -20,6 +20,7 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 
 ### Fixed
 - On narrow screens, wide content could stretch the page.
+- **Security:** prompt cleanup, background-task summaries and private-key redaction no longer use lazy "anything up to a closing tag" regexes, which could backtrack badly on large hostile transcripts (ReDoS; flagged by CodeQL). They now scan with indexOf in linear time, with regression tests on pathological input.
 
 ## [0.2.1] - 2026-10-03
 

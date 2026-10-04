@@ -10,7 +10,7 @@
 import { createTrace, addSpan, finalizeTrace } from '../core/model.mjs';
 import { categorizeTool, phaseOf, summarizeToolInput } from '../core/categories.mjs';
 import { redactValue, redactString } from '../core/redact.mjs';
-import { parseTime, truncateText, contentText } from '../core/util.mjs';
+import { parseTime, truncateText, contentText, textBetween, removeSections } from '../core/util.mjs';
 
 const DEFAULT_MAX_IO = 20000;
 const SUBAGENT_TOOLS = new Set(['Agent', 'Task']);
@@ -34,17 +34,20 @@ function parseLines(text) {
   return { entries, bad };
 }
 
+// Context the app wraps around a prompt; not something the user typed.
+const WRAPPER_TAGS = ['system-reminder', 'ide_opened_file', 'ide_selection', 'ide_diagnostics'];
+
 /** Strip app-injected wrappers so titles show what the user typed (slash commands become "/name args"). */
 export function cleanPromptText(text) {
   const raw = String(text ?? '');
-  const cmd = /<command-name>([\s\S]*?)<\/command-name>/.exec(raw);
-  if (cmd) {
-    const args = /<command-args>([\s\S]*?)<\/command-args>/.exec(raw);
-    return `${cmd[1].trim()}${args && args[1].trim() ? ' ' + args[1].trim() : ''}`;
+  const cmd = textBetween(raw, '<command-name>', '</command-name>');
+  if (cmd !== null) {
+    const args = (textBetween(raw, '<command-args>', '</command-args>') ?? '').trim();
+    return `${cmd.trim()}${args ? ' ' + args : ''}`;
   }
-  const stripped = raw
-    .replace(/<(system-reminder|ide_opened_file|ide_selection|ide_diagnostics)>[\s\S]*?<\/\1>/g, '')
-    .trim();
+  let stripped = raw;
+  for (const tag of WRAPPER_TAGS) stripped = removeSections(stripped, `<${tag}>`, `</${tag}>`);
+  stripped = stripped.trim();
   return stripped || raw.trim();
 }
 
@@ -62,8 +65,8 @@ function classifyHumanText(text) {
 }
 
 function taskSummary(text) {
-  const m = /<summary>([\s\S]*?)<\/summary>/.exec(text);
-  return m ? m[1].trim() : 'Background task finished';
+  const summary = textBetween(text, '<summary>', '</summary>');
+  return summary ? summary.trim() : 'Background task finished';
 }
 
 export function parseClaudeTranscript(text, options = {}) {

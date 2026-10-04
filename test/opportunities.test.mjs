@@ -146,7 +146,11 @@ test('scoped insights: selected turn or visible range, opportunities by session 
   assert.match(turn1.html, /aria-checked="true" data-scope="selection"/);
   assert.match(turn1.html, /Turn 1: Fix the failing build/);
   assert.match(turn1.html, /Running the tests./, "the agent's own words");
-  for (const o of turn1.opportunities) assert.match(turn1.html, new RegExp(`data-opp-open="${o.id}"[\s\S]*?#${o.rank}`));
+  for (const o of turn1.opportunities) {
+    const at = turn1.html.indexOf(`data-opp-open="${o.id}"`);
+    assert.ok(at >= 0, `${o.id} is linked`);
+    assert.ok(turn1.html.indexOf(`#${o.rank}<`, at) > at, `${o.id} shows its session rank`);
+  }
   const turn2 = renderScopedInsights(prepared, { scope: { mode: 'selection', rootId: 'turn-2', label: 'Turn 2' } });
   assert.ok(!turn2.html.includes('Running the tests.'), 'scoped to the turn');
   const range = renderScopedInsights(prepared, { scope: { mode: 'view', t0: prepared.trace.start, t1: prepared.trace.end, label: 'Visible range' }, order: 'desc' });

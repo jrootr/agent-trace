@@ -74,7 +74,8 @@ test('view writes a self-contained report with the trace embedded', async () => 
   const r = await run(['view', '--no-open', '--out', out]);
   assert.equal(r.code, 0, r.stderr);
   const html = fs.readFileSync(out, 'utf8');
-  const data = JSON.parse(html.match(/id="agent-trace-data">([\s\S]*?)<\/script>/)[1]);
+  const start = html.indexOf('id="agent-trace-data">') + 'id="agent-trace-data">'.length;
+  const data = JSON.parse(html.slice(start, html.indexOf('</script>', start)));
   assert.equal(data.traces[0].title, 'Fixture session');
   assert.ok(!html.includes('ghp_abcdefghijklmnopqrstuvwxyz0123456789'), 'secrets redacted by default');
   const lean = path.join(tmp, 'lean.html');

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bWpomPzA/x+MGYZ2iRTFWVyCZIFQItsMC5oL9E8TvCE='; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hb4SqSDV0fcVvD5c/HKOqEn7EeRsoqZkLRpZN8fE+kE='; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>agent-trace</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20role%3D%22img%22%20aria-label%3D%22agent-trace%20logo%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%238b7dff%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%235b4ff5%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%233b2fc9%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22shine%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220.22%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.5%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22moment%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffd27a%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9f43%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2230%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2230%22%20fill%3D%22url(%23shine)%22%2F%3E%0A%20%20%3C!--%20the%20trace%3A%20three%20lanes%20of%20activity%2C%20staggered%20like%20a%20timeline%20--%3E%0A%20%20%3Crect%20x%3D%2222%22%20y%3D%2233%22%20width%3D%2244%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%2F%3E%0A%20%20%3Crect%20x%3D%2240%22%20y%3D%2258%22%20width%3D%2266%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%20fill-opacity%3D%220.78%22%2F%3E%0A%20%20%3Crect%20x%3D%2228%22%20y%3D%2283%22%20width%3D%2230%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%20fill-opacity%3D%220.55%22%2F%3E%0A%20%20%3Crect%20x%3D%2264%22%20y%3D%2283%22%20width%3D%2218%22%20height%3D%2213%22%20rx%3D%226.5%22%20fill%3D%22%23fff%22%20fill-opacity%3D%220.55%22%2F%3E%0A%20%20%3C!--%20the%20dotted%20thread%20connecting%20them%3A%20the%20agent's%20path%20--%3E%0A%20%20%3Cpath%20d%3D%22M66%2039.5%20H78%20Q84%2039.5%2084%2045.5%20V58%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-opacity%3D%220.6%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-dasharray%3D%220.1%206%22%2F%3E%0A%20%20%3C!--%20a%20%22moment%22%3A%20the%20point%20where%20the%20agent%20changed%20course%20--%3E%0A%20%20%3Cpath%20d%3D%22M92%2026%20L102%2036%20L92%2046%20L82%2036%20Z%22%20fill%3D%22url(%23moment)%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>/* agent-trace viewer. Tool-like and quiet: neutral surfaces, 1px rules, color reserved for data
@@ -736,6 +736,32 @@ function contentText(content) {
     .join('\n');
 }
 
+/**
+ * Text between the first `open` marker and the next `close` marker, or null.
+ * Plain indexOf scanning: linear time on any input (no regex backtracking).
+ */
+function textBetween(text, open, close) {
+  const s = String(text ?? '');
+  const a = s.indexOf(open);
+  if (a < 0) return null;
+  const b = s.indexOf(close, a + open.length);
+  return b < 0 ? null : s.slice(a + open.length, b);
+}
+
+/** Remove every `open`…`close` section (markers included). Unclosed sections are left as is. */
+function removeSections(text, open, close) {
+  let s = String(text ?? '');
+  let from = 0;
+  for (;;) {
+    const a = s.indexOf(open, from);
+    if (a < 0) return s;
+    const b = s.indexOf(close, a + open.length);
+    if (b < 0) return s;
+    s = s.slice(0, a) + s.slice(b + close.length);
+    from = a;
+  }
+}
+
 // ---- core/redact.mjs ----
 // Best-effort secret scrubbing before anything is written into a report or exported.
 
@@ -754,7 +780,6 @@ const SECRET_VALUE_RES = [
   /\bAKIA[0-9A-Z]{16}\b/g,
   /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+/g,
   /\bBearer\s+[A-Za-z0-9._~+/-]{10,}=*/gi,
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
 ];
 
 function isSecretKeyName(key) {
@@ -764,8 +789,34 @@ function isSecretKeyName(key) {
   return words.some((w) => SECRET_WORDS.has(w));
 }
 
+const PEM_BEGIN = '-----BEGIN ';
+const PEM_END = '-----END ';
+const PEM_DASHES = '-----';
+
+/** Replace PEM private key blocks (BEGIN … END). Linear indexOf scan; an unterminated block is redacted to the end. */
+function redactPrivateKeys(s) {
+  let out = '';
+  let i = 0;
+  for (;;) {
+    const a = s.indexOf(PEM_BEGIN, i);
+    if (a < 0) return out + s.slice(i);
+    const labelEnd = s.indexOf(PEM_DASHES, a + PEM_BEGIN.length);
+    const label = labelEnd < 0 ? '' : s.slice(a + PEM_BEGIN.length, labelEnd);
+    if (!label.endsWith('PRIVATE KEY') || label.length > 40) {
+      out += s.slice(i, a + PEM_BEGIN.length);
+      i = a + PEM_BEGIN.length;
+      continue;
+    }
+    const endMarker = s.indexOf(PEM_END, labelEnd);
+    const close = endMarker < 0 ? -1 : s.indexOf(PEM_DASHES, endMarker + PEM_END.length);
+    out += s.slice(i, a) + REDACTED_MARK;
+    if (close < 0) return out;
+    i = close + PEM_DASHES.length;
+  }
+}
+
 function redactString(s) {
-  let out = s;
+  let out = redactPrivateKeys(s);
   for (const re of SECRET_VALUE_RES) out = out.replace(re, REDACTED_MARK);
   return out;
 }
@@ -1013,17 +1064,20 @@ function parseLines(text) {
   return { entries, bad };
 }
 
+// Context the app wraps around a prompt; not something the user typed.
+const WRAPPER_TAGS = ['system-reminder', 'ide_opened_file', 'ide_selection', 'ide_diagnostics'];
+
 /** Strip app-injected wrappers so titles show what the user typed (slash commands become "/name args"). */
 function cleanPromptText(text) {
   const raw = String(text ?? '');
-  const cmd = /<command-name>([\s\S]*?)<\/command-name>/.exec(raw);
-  if (cmd) {
-    const args = /<command-args>([\s\S]*?)<\/command-args>/.exec(raw);
-    return `${cmd[1].trim()}${args && args[1].trim() ? ' ' + args[1].trim() : ''}`;
+  const cmd = textBetween(raw, '<command-name>', '</command-name>');
+  if (cmd !== null) {
+    const args = (textBetween(raw, '<command-args>', '</command-args>') ?? '').trim();
+    return `${cmd.trim()}${args ? ' ' + args : ''}`;
   }
-  const stripped = raw
-    .replace(/<(system-reminder|ide_opened_file|ide_selection|ide_diagnostics)>[\s\S]*?<\/\1>/g, '')
-    .trim();
+  let stripped = raw;
+  for (const tag of WRAPPER_TAGS) stripped = removeSections(stripped, `<${tag}>`, `</${tag}>`);
+  stripped = stripped.trim();
   return stripped || raw.trim();
 }
 
@@ -1041,8 +1095,8 @@ function classifyHumanText(text) {
 }
 
 function taskSummary(text) {
-  const m = /<summary>([\s\S]*?)<\/summary>/.exec(text);
-  return m ? m[1].trim() : 'Background task finished';
+  const summary = textBetween(text, '<summary>', '</summary>');
+  return summary ? summary.trim() : 'Background task finished';
 }
 
 function parseClaudeTranscript(text, options = {}) {
