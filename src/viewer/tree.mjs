@@ -2,7 +2,7 @@
 import { escapeHtml, fmtDuration, fmtTokens, icon, INFLECTION_ICONS } from './format.mjs';
 import { INFLECTION_KINDS } from '../core/analysis.mjs';
 
-const ROW_H = 30;
+const ROW_H = 26;
 const OVERSCAN = 8;
 const INDENT = 16;
 

@@ -104,24 +104,32 @@ test('tree rows can be listed newest first at every level', () => {
   assert.deepEqual(kids, [...kids].sort((a, b) => b - a), 'children newest first');
 });
 
-test('details panel: model call, failed tool, turn and subagent drill-downs', async () => {
-  const { renderDetails } = await import('../src/viewer/panels.mjs');
+test('details panel and selection header: model call, failed tool, turn and subagent', async () => {
+  const { renderDetails, renderSelectionHeader } = await import('../src/viewer/panels.mjs');
   const llm = renderDetails(prepared, 'llm-msg_A');
-  assert.match(llm.html, /Model call · claude-test-1/);
   assert.match(llm.html, /class="tok"/, 'token breakdown');
-  assert.match(llm.html, /isn't stored in the transcript/, 'explains missing reasoning text');
+  assert.match(llm.html, /doesn't store reasoning text/, 'explains missing reasoning text');
+  const llmHead = renderSelectionHeader(prepared, 'llm-msg_A');
+  assert.ok(llmHead.includes('Model call') && llmHead.includes('claude-test-1'), 'header names the model call');
+
   const bash = trace.spans.find((s) => s.attrs['tool.call_id'] === 't_bash1');
   const tool = renderDetails(prepared, bash.id);
-  assert.match(tool.html, /Failed/);
   assert.match(tool.html, /callout is-error/);
-  assert.match(tool.html, /Phase<\/dt><dd>Verifying/);
+  assert.ok(tool.html.includes('<dt>Phase</dt><dd class="" title="Verifying">Verifying</dd>'), 'phase in the timing grid');
   assert.ok(tool.blocks.some((b) => b.includes('npm test')), 'full input kept for copy');
-  assert.match(tool.html, /data-goto="turn-1"/, 'breadcrumb back to the turn');
+  const head = renderSelectionHeader(prepared, bash.id);
+  assert.match(head, /Failed/);
+  assert.match(head, /Tool call · Shell/);
+  assert.match(head, /data-goto="turn-1"[^>]*>Turn 1: Fix the failing build/, 'path names the turn it belongs to');
+  assert.ok(head.includes('<code>t_bash1</code>'), 'shows the tool call id');
+  assert.match(head, /data-copy-text="t_bash1"/);
+  assert.match(renderSelectionHeader(prepared, null), /Nothing selected/);
+
   const turn = renderDetails(prepared, 'turn-1');
   assert.match(turn.html, /Inside this turn/);
-  assert.match(turn.html, /<b>1<\/b><span>errors/);
+  assert.ok(turn.html.includes('<div class="is-error"><dt>Errors</dt><dd class="" title="1">1</dd>'), 'error count flagged');
   const agent = renderDetails(prepared, trace.spans.find((s) => s.kind === 'agent').id);
-  assert.match(agent.html, /Subagent/);
+  assert.match(agent.html, /Inside this subagent/);
   const long = { ...prepared, byId: new Map(prepared.byId) };
   long.byId.set('big', { id: 'big', kind: 'tool', name: 'Bash', start: T0, end: T0 + 1, status: 'ok', attrs: {}, input: 'x', output: 'y'.repeat(9000), parentId: null });
   assert.match(renderDetails(long, 'big').html, /Show all 9,000 characters/);

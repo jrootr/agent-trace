@@ -21,7 +21,7 @@
       <div id="trace-meta" class="trace-meta"></div>
     </div>
     <select id="trace-picker" class="picker" hidden aria-label="Choose a trace"></select>
-    <div id="stat-chips" class="stat-chips" aria-label="Session summary"></div>
+    <div id="stat-chips" class="stats" aria-label="Session summary"></div>
     <div class="actions">
       <button id="btn-open" class="btn" type="button"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open</span></button>
       <div class="menu-wrap">
@@ -60,29 +60,45 @@
   <div id="splitter" class="splitter" role="separator" aria-orientation="horizontal" aria-label="Resize timeline" tabindex="0"></div>
 
   <main class="workspace">
-    <section class="tree-panel" aria-label="Call tree">
-      <div class="panel-toolbar tree-toolbar">
-        <label class="search">
-          <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
-          <input id="search" type="search" placeholder="Search names, inputs, outputs" aria-label="Search spans" autocomplete="off" spellcheck="false">
-          <kbd>/</kbd>
-        </label>
-        <div class="tree-actions">
-          <button class="btn-link with-icon" id="btn-order" type="button" title="Reverse the list order (o)" aria-pressed="false"></button>
-          <button class="btn-link" id="btn-expand" type="button">Expand all</button>
-          <button class="btn-link" id="btn-collapse" type="button">Collapse</button>
-          <button class="btn-link" id="btn-clear" type="button" title="Clear selection, search and filters (c)">Clear</button>
+    <section class="pane" aria-labelledby="pane-session-title">
+      <header class="pane-head">
+        <h2 class="pane-title" id="pane-session-title">Session</h2>
+        <div class="tabs" role="tablist" aria-label="Session views">
+          <button role="tab" id="ltab-calls" type="button" aria-selected="true" aria-controls="lpane-calls">Calls <span class="n" id="n-calls"></span></button>
+          <button role="tab" id="ltab-opps" type="button" aria-selected="false" aria-controls="lpane-opps">Opportunities <span class="n" id="n-opps"></span></button>
+          <button role="tab" id="ltab-overview" type="button" aria-selected="false" aria-controls="lpane-overview">Overview</button>
         </div>
-        <div id="filter-chips" class="chips" role="group" aria-label="Filter spans"></div>
+      </header>
+      <div class="lpane calls" id="lpane-calls" role="tabpanel" aria-labelledby="ltab-calls">
+        <div class="toolbar">
+          <label class="search">
+            <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
+            <input id="search" type="search" placeholder="Search names, inputs, outputs" aria-label="Search calls" autocomplete="off" spellcheck="false">
+            <kbd>/</kbd>
+          </label>
+          <div class="toolbar-actions">
+            <button class="link-btn with-icon" id="btn-order" type="button" title="Reverse the list order (o)" aria-pressed="false"></button>
+            <button class="link-btn" id="btn-expand" type="button">Expand</button>
+            <button class="link-btn" id="btn-collapse" type="button">Collapse</button>
+            <button class="link-btn" id="btn-clear" type="button" title="Clear selection, search and filters (c)">Clear</button>
+          </div>
+          <div id="filter-chips" class="chips" role="group" aria-label="Filter calls"></div>
+        </div>
+        <div id="tree" class="tree"></div>
       </div>
-      <div id="tree" class="tree"></div>
+      <div class="lpane scroll" id="lpane-opps" role="tabpanel" aria-labelledby="ltab-opps" hidden></div>
+      <div class="lpane scroll" id="lpane-overview" role="tabpanel" aria-labelledby="ltab-overview" hidden></div>
     </section>
-    <aside class="side-panel" aria-label="Details and insights">
-      <div class="tabs" role="tablist">
-        <button role="tab" id="tab-details" type="button" aria-selected="false">Details</button>
-        <button role="tab" id="tab-insights" type="button" aria-selected="true">Insights</button>
-      </div>
-      <div id="side-body" class="side-body" role="tabpanel"></div>
+    <aside class="pane" aria-labelledby="pane-selection-title">
+      <header class="pane-head">
+        <h2 class="pane-title" id="pane-selection-title">Selection</h2>
+        <div class="tabs" role="tablist" aria-label="Selection views">
+          <button role="tab" id="tab-details" type="button" aria-selected="true" aria-controls="side-body">Details</button>
+          <button role="tab" id="tab-insights" type="button" aria-selected="false" aria-controls="side-body">Insights</button>
+        </div>
+      </header>
+      <div id="sel-head" class="sel-wrap" aria-live="polite"></div>
+      <div id="side-body" class="side-body scroll" role="tabpanel"></div>
     </aside>
   </main>
 
@@ -122,7 +138,8 @@
         <div><dt><kbd>Enter</kbd></dt><dd>Zoom timeline to selection</dd></div>
         <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next moment</dd></div>
         <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
-        <div><dt><kbd>d</kbd> <kbd>i</kbd></dt><dd>Details / Insights tab</dd></div>
+        <div><dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Session: Calls / Opportunities / Overview</dd></div>
+        <div><dt><kbd>d</kbd> <kbd>i</kbd></dt><dd>Selection: Details / Insights</dd></div>
         <div><dt><kbd>o</kbd></dt><dd>Oldest / newest first (list)</dd></div>
         <div><dt><kbd>c</kbd></dt><dd>Clear selection, search, filters</dd></div>
         <div><dt>Shift + click a chip</dt><dd>Show only that category</dd></div>
@@ -130,7 +147,7 @@
         <div><dt><kbd>Esc</kbd></dt><dd>Clear selection</dd></div>
       </dl></section>
     </div>
-    <p class="note"><b>Opportunities</b> (Insights tab) are estimated savings with the calls that prove them: redundant reads, repeated failures, one-at-a-time lookups, bloated outputs, cache expiry, slow test loops, edit churn and repeated routines. Insights follow your selection, the whole session, or the visible timeline range.</p>
+    <p class="note"><b>Session</b> (left) is the whole run: every call, ranked opportunities, and overall numbers. <b>Selection</b> (right) drills into one step: its details, and insights for the turn it belongs to.</p>
     <p class="note"><b>Moments</b> are inferred turning points: errors and how the agent recovered, shifts between exploring, building and verifying, unusually heavy thinking, and times you steered it mid-task.</p>
   </dialog>
 </div>

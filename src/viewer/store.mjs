@@ -1,6 +1,7 @@
 // Tiny observable store. Components subscribe and re-render only for the keys they care about.
 import { indexTrace, sanitizeTrace } from '../core/model.mjs';
 import { findInflections, computeStats } from '../core/analysis.mjs';
+import { findOpportunities } from '../core/opportunities.mjs';
 
 export function createStore(initial) {
   let state = initial;
@@ -26,6 +27,15 @@ export function prepareTrace(trace) {
   const { byId, children } = indexTrace(trace);
   const inflections = findInflections(trace);
   const stats = computeStats(trace);
+  // ranked once for the whole session, so the left list and the right panel agree on rank
+  const opportunities = findOpportunities(trace).map((o, i) => ({ ...o, rank: i + 1 }));
+  const opportunitiesBySpan = new Map();
+  for (const o of opportunities) {
+    for (const id of o.evidence) {
+      if (!opportunitiesBySpan.has(id)) opportunitiesBySpan.set(id, []);
+      opportunitiesBySpan.get(id).push(o);
+    }
+  }
   const inflectionsBySpan = new Map();
   for (const inf of inflections) {
     if (!inf.spanId) continue;
@@ -48,7 +58,7 @@ export function prepareTrace(trace) {
     }
     return searchText.get(s.id);
   };
-  return { trace, byId, children, depth, inflections, inflectionsBySpan, stats, textFor };
+  return { trace, byId, children, depth, inflections, inflectionsBySpan, opportunities, opportunitiesBySpan, stats, textFor };
 }
 
 export function ancestorsOf(prepared, id) {

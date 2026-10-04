@@ -6,6 +6,21 @@ While the version is 0.x, minor releases may change behavior; breaking changes a
 
 ## [Unreleased]
 
+### Changed
+- **New layout: Session (left) and Selection (right).**
+  - The left pane covers the whole run, with tabs for **Calls**, **Opportunities** (ranked once per session) and **Overview** (totals, time split, moments, tools).
+  - The right pane is a drill-down. A header always names the selected step's kind, path and ID.
+  - **Insights** cover the selected step's turn or the visible range, and list the session opportunities involved, with their rank.
+- Opportunities expand in place to show their evidence; clicking an evidence call opens it in Details.
+- **Visual pass:** flatter and denser. Square swatches instead of pills, key/value grids instead of cards, labeled panes, no drop shadows, plainer wording.
+- Keyboard: `1`/`2`/`3` switch the Session tabs.
+
+### Added
+- **Deep links.** The URL hash keeps the selected step (or tool call ID), the open tabs and the expanded opportunity, so reloading or sharing lands on the same view.
+
+### Fixed
+- On narrow screens, wide content could stretch the page.
+
 ## [0.2.1] - 2026-10-03
 
 ### Changed

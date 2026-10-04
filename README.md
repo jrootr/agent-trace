@@ -40,12 +40,16 @@ This opens your most recent Claude Code session as an interactive report in your
 
 ## What you get
 
-- **Timeline:** turns, model calls, tools, moments and context size. Idle stretches are squeezed out. Scroll to zoom, drag to pan.
-- **Call tree:** turns → model calls → tools → subagents. Newest or oldest first, searchable, filterable.
-- **Details:** prompts, responses, tool inputs and outputs, errors, and the token breakdown for any call.
+- **Timeline** across the top: turns, model calls, tools, moments and context size. Idle stretches are squeezed out. Scroll to zoom, drag to pan.
+- **Session** pane (left), for the whole run:
+  - **Calls:** turns → model calls → tools → subagents. Searchable, filterable, newest or oldest first.
+  - **Opportunities:** ranked, evidence-backed ways to make the next run faster and cheaper (below).
+  - **Overview:** totals, where the time went, moments, tools.
+- **Selection** pane (right), a drill-down into one step. A header names exactly what's selected: kind, path and ID.
+  - **Details:** inputs, outputs, errors, timing and tokens.
+  - **Insights:** the step's turn (or the visible range), including which opportunities involve it.
 - **Moments:** where the agent changed course. Errors and recoveries, phase pivots, heavy thinking, times you stepped in.
-- **Insights:** scoped to your selection, the session, or the visible range. Includes a *story* of what the agent said, where the time went, and the slowest calls.
-- **Opportunities:** ranked, evidence-backed ways to make the next run faster and cheaper (below).
+- **Deep links:** the URL keeps the selected step and open tabs, so you can link straight to a step.
 - **OpenTelemetry in and out:** export with GenAI conventions, send to Jaeger, Langfuse or Phoenix, or open any OTLP trace.
 - **Safe to share:** secrets redacted, `--no-io` for structure-only reports, and a strict CSP so a report can't phone home.
 

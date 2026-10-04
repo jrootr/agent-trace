@@ -5,8 +5,8 @@ import crypto from 'node:crypto';
 import { parseAny } from '../src/adapters/registry.mjs';
 import { sanitizeTrace } from '../src/core/model.mjs';
 import { prepareTrace } from '../src/viewer/store.mjs';
-import { renderDetails } from '../src/viewer/panels.mjs';
-import { renderInsights } from '../src/viewer/insights.mjs';
+import { renderDetails, renderSelectionHeader } from '../src/viewer/panels.mjs';
+import { renderOpportunityList, renderOverview, renderScopedInsights } from '../src/viewer/insights.mjs';
 import { buildHtml, contentSecurityPolicy } from '../src/build/bundle.mjs';
 import { toOtlp } from '../src/adapters/otlp.mjs';
 
@@ -48,8 +48,11 @@ test('rendered panels never contain raw markup from the trace', () => {
   const prepared = prepareTrace(hostileTrace());
   const htmls = [
     ...prepared.trace.spans.map((s) => renderDetails(prepared, s.id).html),
-    renderInsights(prepared, { scope: { mode: 'session', label: XSS } }).html,
-    renderInsights(prepared, { scope: { mode: 'auto', rootId: 's', label: XSS } }).html,
+    ...prepared.trace.spans.map((s) => renderSelectionHeader(prepared, s.id)),
+    renderScopedInsights(prepared, { scope: { mode: 'selection', rootId: 's', label: XSS } }).html,
+    renderScopedInsights(prepared, { scope: { mode: 'view', t0: 0, t1: 10, label: XSS } }).html,
+    renderOpportunityList(prepared, { expandedId: prepared.opportunities[0]?.id }),
+    renderOverview(prepared),
   ];
   for (const html of htmls) {
     assert.ok(!/<img|<script|onerror=|url\(https/i.test(html.replace(/&lt;img|&lt;script|onerror=alert\(1\)&gt;|url\(https:\/\/evil\.example\)/g, '')), 'no live markup');
