@@ -4,7 +4,7 @@ import { findOpportunities, summarizeOpportunities } from '../src/core/opportuni
 import { sliceTrace, computeStats } from '../src/core/analysis.mjs';
 import { createTrace, addSpan, finalizeTrace } from '../src/core/model.mjs';
 import { parseClaudeTranscript } from '../src/adapters/claude-code.mjs';
-import { renderInsights } from '../src/viewer/insights.mjs';
+import { renderOpportunityList, renderOverview, renderScopedInsights } from '../src/viewer/insights.mjs';
 import { prepareTrace } from '../src/viewer/store.mjs';
 import { fixtureText } from './fixtures/transcript.mjs';
 
@@ -118,18 +118,42 @@ test('sliceTrace: subtree and time window scopes', () => {
   assert.equal(sliceTrace(trace), trace);
 });
 
-test('insights render per scope, with opportunities, story and scope label', () => {
+test('session panels: ranked opportunity list and overview', () => {
   const prepared = prepareTrace(parseClaudeTranscript(fixtureText()));
-  const all = renderInsights(prepared, { scope: { mode: 'session', label: 'Whole session' } });
-  assert.match(all.html, /Whole session/);
-  assert.match(all.html, /Story <span class="count">/);
-  assert.match(all.html, /Running the tests\./, 'the agent\'s own words appear in the story');
-  assert.equal(all.stats.turns, 2);
-  const turn = renderInsights(prepared, { scope: { mode: 'auto', rootId: 'turn-2', label: 'Turn · /review src' } });
-  assert.equal(turn.stats.turns, 1);
-  assert.match(turn.html, /aria-checked="true" data-scope="auto"/);
-  assert.ok(!turn.html.includes('Running the tests.'), 'story is scoped to the turn');
-  const desc = renderInsights(prepared, { scope: { mode: 'session', label: 's' }, order: 'desc' });
-  assert.ok(desc.html.indexOf('Done: the build passes') < desc.html.indexOf('Running the tests.'), 'newest first');
-  for (const o of all.opportunities) assert.match(all.html, new RegExp(`data-evidence="${o.id}"`));
+  assert.deepEqual(prepared.opportunities.map((o) => o.rank), prepared.opportunities.map((_, i) => i + 1), 'ranked once per session');
+  for (const o of prepared.opportunities) for (const id of o.evidence) assert.ok(prepared.opportunitiesBySpan.get(id).includes(o));
+  const list = renderOpportunityList(prepared);
+  for (const o of prepared.opportunities) assert.match(list, new RegExp(`data-opp="${o.id}"`));
+  assert.ok(!list.includes('class="ev"'), 'collapsed rows hide evidence');
+  if (prepared.opportunities.length) {
+    const open = renderOpportunityList(prepared, { expandedId: prepared.opportunities[0].id });
+    assert.match(open, /Suggested fix/);
+    assert.match(open, /data-evidence="opp-1"/);
+    assert.match(open, /class="row-btn ev"/);
+  }
+  const overview = renderOverview(prepared);
+  assert.match(overview, /Totals/);
+  assert.match(overview, /Where the time went/);
+  assert.match(overview, /Moments/);
+});
+
+test('scoped insights: selected turn or visible range, opportunities by session rank, messages', () => {
+  const prepared = prepareTrace(parseClaudeTranscript(fixtureText()));
+  const none = renderScopedInsights(prepared, { scope: null });
+  assert.match(none.html, /Select a step/);
+  const turn1 = renderScopedInsights(prepared, { scope: { mode: 'selection', rootId: 'turn-1', label: 'Turn 1: Fix the failing build' } });
+  assert.equal(turn1.stats.turns, 1);
+  assert.match(turn1.html, /aria-checked="true" data-scope="selection"/);
+  assert.match(turn1.html, /Turn 1: Fix the failing build/);
+  assert.match(turn1.html, /Running the tests./, "the agent's own words");
+  for (const o of turn1.opportunities) {
+    const at = turn1.html.indexOf(`data-opp-open="${o.id}"`);
+    assert.ok(at >= 0, `${o.id} is linked`);
+    assert.ok(turn1.html.indexOf(`#${o.rank}<`, at) > at, `${o.id} shows its session rank`);
+  }
+  const turn2 = renderScopedInsights(prepared, { scope: { mode: 'selection', rootId: 'turn-2', label: 'Turn 2' } });
+  assert.ok(!turn2.html.includes('Running the tests.'), 'scoped to the turn');
+  const range = renderScopedInsights(prepared, { scope: { mode: 'view', t0: prepared.trace.start, t1: prepared.trace.end, label: 'Visible range' }, order: 'desc' });
+  assert.match(range.html, /aria-checked="true" data-scope="view"/);
+  assert.ok(range.html.indexOf('The review found nothing') < range.html.indexOf('Running the tests.'), 'newest first');
 });

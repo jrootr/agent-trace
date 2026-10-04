@@ -1,4 +1,5 @@
-// Viewer entry point: wires the store, timeline, tree and side panel together.
+// Viewer entry point. Layout: timeline on top; below it the Session pane (left: the whole run)
+// and the Selection pane (right: a drill-down into one step).
 import { parseAny } from '../adapters/registry.mjs';
 import { toOtlp } from '../adapters/otlp.mjs';
 import { CATEGORY_LABELS } from '../core/categories.mjs';
@@ -6,11 +7,12 @@ import { createStore, prepareTrace } from './store.mjs';
 import { buildTimeScale } from './timescale.mjs';
 import { createTimeline } from './timeline.mjs';
 import { createTree } from './tree.mjs';
-import { renderDetails } from './panels.mjs';
-import { renderInsights } from './insights.mjs';
-import { escapeHtml, fmtDuration, fmtTokens, fmtClock, icon, debounce, storageGet, storageSet } from './format.mjs';
+import { renderDetails, renderSelectionHeader, spanLabel } from './panels.mjs';
+import { renderOpportunityList, renderOverview, renderScopedInsights } from './insights.mjs';
+import { escapeHtml, fmtDuration, fmtNumber, fmtTokens, fmtClock, icon, debounce, storageGet, storageSet } from './format.mjs';
 
 const THEMES = ['system', 'light', 'dark'];
+const LEFT_TABS = ['calls', 'opps', 'overview'];
 const LARGE_TRACE = 1500;
 
 function defaultFilters() {
@@ -21,6 +23,7 @@ export function startApp() {
   const $ = (id) => document.getElementById(id);
   const root = document.documentElement;
 
+  const savedLeft = storageGet('leftTab', 'calls');
   const store = createStore({
     traces: [],
     traceIndex: 0,
@@ -33,12 +36,14 @@ export function startApp() {
     collapsed: new Set(),
     matchIds: null,
     filters: defaultFilters(),
-    sideTab: 'insights',
+    leftTab: LEFT_TABS.includes(savedLeft) ? savedLeft : 'calls',
+    sideTab: 'details',
+    oppExpanded: null,
     infGroup: 'all',
     theme: 0,
     compressIdle: storageGet('compressIdle', true),
     treeOrder: storageGet('treeOrder', 'asc'),
-    insightScope: storageGet('insightScope', 'auto'),
+    insightScope: storageGet('insightScope', 'selection') === 'view' ? 'view' : 'selection',
   });
 
   // --- theme ------------------------------------------------------------------------------
@@ -62,10 +67,9 @@ export function startApp() {
     applyTheme();
   }
 
-  // --- components -------------------------------------------------------------------------
+  // --- selection ----------------------------------------------------------------------------
+  /** Select a step. Clicks inside the panes (lists, evidence, breadcrumbs) open its Details. */
   const select = ({ spanId, inflectionId = null, from = 'timeline' }) => {
-    // Clicks inside the side panel mean "drill into this"; elsewhere the open tab stays put
-    // (Insights then re-scopes to the selection).
     const sideTab = spanId && from === 'panel' ? 'details' : store.get().sideTab;
     store.set({ selectedId: spanId ?? null, selectedInflection: inflectionId, sideTab });
     if (spanId && from !== 'timeline') timeline.reveal(spanId);
@@ -92,7 +96,7 @@ export function startApp() {
     const collapsed = trace.spans.length > LARGE_TRACE
       ? new Set(trace.spans.filter((s) => s.kind === 'turn' || s.kind === 'agent').map((s) => s.id))
       : new Set();
-    store.set({ traceIndex: index, prepared, scale, collapsed, selectedId: null, selectedInflection: null, hoverId: null, sideTab: 'insights' });
+    store.set({ traceIndex: index, prepared, scale, collapsed, selectedId: null, selectedInflection: null, hoverId: null, oppExpanded: null });
     recomputeFilter();
     renderHeader();
     renderChips();
@@ -130,13 +134,13 @@ export function startApp() {
     const meta = [trace.source === 'claude-code' ? 'Claude Code' : trace.source, fmtClock(trace.start, true)];
     if (trace.meta?.cwd) meta.push(trace.meta.cwd);
     $('trace-meta').textContent = meta.filter(Boolean).join(' · ');
-    const chip = (label, value, cls = '') => `<div class="stat ${cls}"><b>${value}</b><span>${label}</span></div>`;
+    const stat = (label, value, cls = '') => `<div class="stat ${cls}"><span class="stat-v">${value}</span><span class="stat-l">${label}</span></div>`;
     $('stat-chips').innerHTML =
-      chip('active', fmtDuration(stats.activeTime)) +
-      chip('turns', stats.turns) +
-      chip('tool calls', stats.toolCalls) +
-      chip('output tokens', fmtTokens(stats.tokens.output)) +
-      chip('errors', stats.errors, stats.errors ? 'has-error' : '');
+      stat('active', fmtDuration(stats.activeTime)) +
+      stat('turns', fmtNumber(stats.turns)) +
+      stat('tool calls', fmtNumber(stats.toolCalls)) +
+      stat('output tokens', fmtTokens(stats.tokens.output)) +
+      stat('errors', fmtNumber(stats.errors), stats.errors ? 'is-error' : '');
     const cats = Object.keys(stats.byCategory);
     $('tl-legend').innerHTML =
       '<span><i style="background:var(--turn-strong)"></i>Turn</span><span><i style="background:var(--llm)"></i>Model</span>' +
@@ -144,23 +148,23 @@ export function startApp() {
       '<span><i style="background:var(--error)"></i>Error</span>';
   }
 
-  // --- filters ----------------------------------------------------------------------------
+  // --- Calls filters ------------------------------------------------------------------------
   function renderChips() {
     const { prepared, filters } = store.get();
     if (!prepared) return;
     const cats = Object.entries(prepared.stats.byCategory).sort((a, b) => b[1].count - a[1].count);
     const chip = (key, label, n, color) =>
-      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}" title="Click to show or hide · Shift+click to show only this">${escapeHtml(label)}${n != null ? ` <span class="chip-n">${n}</span>` : ''}</button>`;
+      `<button class="chip ${filters.off.has(key) ? '' : 'is-on'}" data-filter="${key}" aria-pressed="${!filters.off.has(key)}" style="--c:${color}" title="Click to show or hide · Shift+click to show only this"><i></i>${escapeHtml(label)}${n != null ? ` <span class="n">${n}</span>` : ''}</button>`;
     const evidence = filters.evidence
-      ? `<button class="chip evidence is-on" data-clear-evidence="1" style="--c:var(--accent)" title="Stop highlighting these calls">${escapeHtml(filters.evidence.title)} ${icon('close', 12)}</button><span class="chip-sep"></span>`
+      ? `<button class="chip evidence is-on" data-clear-evidence="1" title="Stop highlighting">Highlighting: ${escapeHtml(filters.evidence.title)} ${icon('close', 11)}</button>`
       : '';
     $('filter-chips').innerHTML =
       evidence +
       chip('llm', 'Model', prepared.stats.llmCalls, 'var(--llm)') +
       cats.map(([c, v]) => chip(c, CATEGORY_LABELS[c] ?? c, v.count, `var(--cat-${c})`)).join('') +
-      `<span class="chip-sep"></span>` +
-      `<button class="chip toggle ${filters.errorsOnly ? 'is-on' : ''}" data-toggle-filter="errorsOnly" aria-pressed="${filters.errorsOnly}" style="--c:var(--error)">Errors only</button>` +
-      `<button class="chip toggle ${filters.momentsOnly ? 'is-on' : ''}" data-toggle-filter="momentsOnly" aria-pressed="${filters.momentsOnly}" style="--c:var(--inf-pivot)">Moments only</button>`;
+      '<span class="chip-sep"></span>' +
+      `<button class="chip toggle ${filters.errorsOnly ? 'is-on' : ''}" data-toggle-filter="errorsOnly" aria-pressed="${filters.errorsOnly}" style="--c:var(--error)"><i></i>Errors only</button>` +
+      `<button class="chip toggle ${filters.momentsOnly ? 'is-on' : ''}" data-toggle-filter="momentsOnly" aria-pressed="${filters.momentsOnly}" style="--c:var(--inf-pivot)"><i></i>Moments only</button>`;
   }
 
   function recomputeFilter() {
@@ -207,42 +211,73 @@ export function startApp() {
     renderChips();
     recomputeFilter();
   });
-  $('search').addEventListener('input', debounce((e) => {
-    store.set({ filters: { ...store.get().filters, query: e.target.value } });
+  const setQuery = (q) => {
+    $('search').value = q;
+    store.set({ filters: { ...store.get().filters, query: q } });
     recomputeFilter();
-  }, 120));
+  };
+  $('search').addEventListener('input', debounce((e) => setQuery(e.target.value), 120));
 
-  // --- side panel -------------------------------------------------------------------------
+  // --- Session pane (left) ------------------------------------------------------------------
+  function setLeftTab(tab) {
+    storageSet('leftTab', tab);
+    store.set({ leftTab: tab });
+  }
+
+  function renderLeft() {
+    const { prepared, leftTab, oppExpanded, infGroup, treeOrder } = store.get();
+    for (const t of LEFT_TABS) {
+      $(`ltab-${t}`).setAttribute('aria-selected', String(leftTab === t));
+      $(`lpane-${t}`).hidden = leftTab !== t;
+    }
+    if (!prepared) return;
+    $('n-calls').textContent = fmtNumber(prepared.stats.llmCalls + prepared.stats.toolCalls);
+    $('n-opps').textContent = prepared.opportunities.length || '';
+    if (leftTab === 'opps') $('lpane-opps').innerHTML = renderOpportunityList(prepared, { expandedId: oppExpanded });
+    if (leftTab === 'overview') $('lpane-overview').innerHTML = renderOverview(prepared, { group: infGroup, order: treeOrder });
+  }
+
+  function openOpportunity(id) {
+    store.set({ oppExpanded: id });
+    setLeftTab('opps');
+    requestAnimationFrame(() => $('lpane-opps').querySelector(`[data-opp-row="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' }));
+  }
+
+  function highlightEvidence(oppId) {
+    const { prepared } = store.get();
+    const opp = prepared?.opportunities.find((o) => o.id === oppId);
+    if (!opp) return;
+    store.set({ filters: { ...store.get().filters, evidence: { title: `#${opp.rank} ${opp.title}`, ids: new Set(opp.evidence) } } });
+    renderChips();
+    recomputeFilter();
+    const spans = opp.evidence.map((id) => prepared.byId.get(id)).filter(Boolean);
+    if (spans.length) timeline.zoomToRange(Math.min(...spans.map((s) => s.start)), Math.max(...spans.map((s) => s.end)));
+    toast(`Highlighting ${spans.length} call${spans.length === 1 ? '' : 's'} on the timeline and under Calls.`);
+  }
+
+  // --- Selection pane (right) ----------------------------------------------------------------
   let blocks = [];
-  let opportunities = [];
   let lastSubject = '';
 
-  /** What Insights should summarize: visible range, the selected turn/subagent, or everything. */
+  /** What Insights summarizes: the selected step's turn/subagent, or the visible time range. */
   function resolveScope() {
     const { prepared, selectedId, insightScope, view, scale } = store.get();
     if (insightScope === 'view' && view && scale) {
       const t0 = Math.max(scale.fromV(view.v0), prepared.trace.start);
       const t1 = Math.min(scale.fromV(view.v1), prepared.trace.end);
-      return { mode: 'view', t0, t1, label: `Visible range · ${fmtClock(t0)} to ${fmtClock(t1)}` };
+      return { mode: 'view', t0, t1, label: `Visible range: ${fmtClock(t0)} to ${fmtClock(t1)}` };
     }
-    if (insightScope === 'auto' && selectedId) {
-      let s = prepared.byId.get(selectedId);
-      while (s && !['turn', 'agent', 'session'].includes(s.kind) && s.parentId) s = prepared.byId.get(s.parentId);
-      if (s && s.kind !== 'session') return { mode: 'auto', rootId: s.id, label: `${s.kind === 'agent' ? 'Subagent' : 'Turn'} · ${s.name}` };
-    }
-    return { mode: insightScope, label: insightScope === 'auto' ? 'Whole session · select a turn or call to narrow it' : 'Whole session' };
+    if (!selectedId) return null;
+    let s = prepared.byId.get(selectedId);
+    while (s && !['turn', 'agent', 'session'].includes(s.kind) && s.parentId) s = prepared.byId.get(s.parentId);
+    if (!s || s.kind === 'session') return null;
+    const own = s.id === selectedId ? '' : ` (contains the selected ${spanLabel(prepared.byId.get(selectedId)).toLowerCase()})`;
+    return { mode: 'selection', rootId: s.id, label: `${spanLabel(s)}: ${s.name}${own}` };
   }
 
-  function showEvidence(oppId) {
-    const opp = opportunities.find((o) => o.id === oppId);
-    const { prepared } = store.get();
-    if (!opp || !prepared) return;
-    store.set({ filters: { ...store.get().filters, evidence: { title: opp.title, ids: new Set(opp.evidence) } } });
-    renderChips();
-    recomputeFilter();
-    const spans = opp.evidence.map((id) => prepared.byId.get(id)).filter(Boolean);
-    if (spans.length) timeline.zoomToRange(Math.min(...spans.map((s) => s.start)), Math.max(...spans.map((s) => s.end)));
-    toast(`Highlighting ${spans.length} call${spans.length === 1 ? '' : 's'}. Clear it from the chip above the list.`);
+  function renderSelection() {
+    const { prepared, selectedId } = store.get();
+    $('sel-head').innerHTML = prepared ? renderSelectionHeader(prepared, selectedId) : '';
   }
 
   function renderSide() {
@@ -255,12 +290,10 @@ export function startApp() {
       return;
     }
     if (sideTab === 'insights') {
-      const r = renderInsights(prepared, { scope: resolveScope(), group: infGroup, order: treeOrder, selectedId });
-      body.innerHTML = r.html;
-      opportunities = r.opportunities;
+      body.innerHTML = renderScopedInsights(prepared, { scope: resolveScope(), order: treeOrder, selectedId, group: infGroup }).html;
       blocks = [];
     } else if (!selectedId) {
-      body.innerHTML = `<div class="placeholder">${icon('layers', 28)}<p>Select a span in the timeline or the tree to see its inputs, outputs, tokens and timing.</p><p class="note">Tip: <kbd>[</kbd> and <kbd>]</kbd> jump between moments.</p></div>`;
+      body.innerHTML = '<div class="pane-empty"><p>Details show the inputs, outputs, tokens and timing of one step.</p><p class="note"><kbd>[</kbd> and <kbd>]</kbd> step through moments. <kbd>j</kbd> and <kbd>k</kbd> step through calls.</p></div>';
       blocks = [];
     } else {
       const r = renderDetails(prepared, selectedId);
@@ -268,54 +301,95 @@ export function startApp() {
       blocks = r.blocks;
     }
     // keep the reader's place when the same panel just refreshes (e.g. scope follows the timeline)
-    const subject = `${sideTab}|${sideTab === 'details' ? selectedId : ''}`;
+    const subject = `${sideTab}|${selectedId}`;
     if (subject !== lastSubject) body.scrollTop = 0;
     lastSubject = subject;
   }
   const renderSideSoon = debounce(renderSide, 150);
-  $('tab-details').addEventListener('click', () => store.set({ sideTab: 'details' }));
-  $('tab-insights').addEventListener('click', () => store.set({ sideTab: 'insights' }));
-  $('side-body').addEventListener('click', async (e) => {
+
+  // --- one click handler for every pane ------------------------------------------------------
+  async function onPaneClick(e) {
     const t = e.target.closest('button, tr[data-tool]');
-    if (!t) return;
-    if (t.dataset.scope) {
-      storageSet('insightScope', t.dataset.scope);
-      store.set({ insightScope: t.dataset.scope });
-    } else if (t.dataset.evidence) showEvidence(t.dataset.evidence);
-    else if (t.dataset.goto) select({ spanId: t.dataset.goto, from: 'panel' });
-    else if (t.dataset.zoom) timeline.zoomToSpan(t.dataset.zoom);
-    else if (t.dataset.inflection) {
-      const span = t.dataset.span || null;
-      store.set({ selectedInflection: t.dataset.inflection });
-      if (span) {
-        select({ spanId: span, inflectionId: t.dataset.inflection, from: 'panel' });
-        timeline.zoomToSpan(span);
+    if (!t || t.disabled) return;
+    const d = t.dataset;
+    if (d.scope) {
+      storageSet('insightScope', d.scope);
+      store.set({ insightScope: d.scope });
+    } else if (d.opp) store.set({ oppExpanded: store.get().oppExpanded === d.opp ? null : d.opp });
+    else if (d.oppOpen) openOpportunity(d.oppOpen);
+    else if (d.evidence) highlightEvidence(d.evidence);
+    else if (d.goto) select({ spanId: d.goto, from: 'panel' });
+    else if (d.zoom) timeline.zoomToSpan(d.zoom);
+    else if (d.inflection) {
+      store.set({ selectedInflection: d.inflection });
+      if (d.span) {
+        select({ spanId: d.span, inflectionId: d.inflection, from: 'panel' });
+        timeline.zoomToSpan(d.span);
       }
-    } else if (t.dataset.infGroup) store.set({ infGroup: t.dataset.infGroup });
-    else if (t.dataset.copy) {
+    } else if (d.infGroup) store.set({ infGroup: d.infGroup });
+    else if (d.copy || d.copyText) {
       e.preventDefault();
       try {
-        await navigator.clipboard.writeText(blocks[Number(t.dataset.copy)] ?? '');
+        await navigator.clipboard.writeText(d.copyText ?? blocks[Number(d.copy)] ?? '');
         toast('Copied to clipboard');
       } catch {
         toast('Copy failed: clipboard access is blocked here', 'error');
       }
-    } else if (t.dataset.expand) {
-      const pre = $('side-body').querySelector(`pre[data-block="${t.dataset.expand}"]`);
-      if (pre) pre.textContent = blocks[Number(t.dataset.expand)];
+    } else if (d.expand) {
+      const pre = $('side-body').querySelector(`pre[data-block="${d.expand}"]`);
+      if (pre) pre.textContent = blocks[Number(d.expand)];
       t.remove();
-    } else if (t.dataset.tool) {
-      $('search').value = t.dataset.tool;
-      store.set({ filters: { ...store.get().filters, query: t.dataset.tool } });
-      recomputeFilter();
+    } else if (d.tool) {
+      setQuery(d.tool);
+      setLeftTab('calls');
     }
-  });
+  }
+  for (const id of ['lpane-opps', 'lpane-overview', 'side-body', 'sel-head']) $(id).addEventListener('click', onPaneClick);
+  for (const t of LEFT_TABS) $(`ltab-${t}`).addEventListener('click', () => setLeftTab(t));
+  $('tab-details').addEventListener('click', () => store.set({ sideTab: 'details' }));
+  $('tab-insights').addEventListener('click', () => store.set({ sideTab: 'insights' }));
 
   store.subscribe((state, changed) => {
-    if (['prepared', 'selectedId', 'sideTab', 'infGroup', 'insightScope', 'treeOrder'].some((k) => changed.has(k))) renderSide();
+    const any = (...keys) => keys.some((k) => changed.has(k));
+    if (any('prepared', 'leftTab', 'oppExpanded', 'infGroup', 'treeOrder')) renderLeft();
+    if (any('prepared', 'selectedId')) renderSelection();
+    if (any('prepared', 'selectedId', 'sideTab', 'infGroup', 'insightScope', 'treeOrder')) renderSide();
     else if (changed.has('view') && state.sideTab === 'insights' && state.insightScope === 'view') renderSideSoon();
     if (changed.has('treeOrder')) renderOrderButton();
+    if (state.prepared && any('selectedId', 'leftTab', 'sideTab', 'oppExpanded')) writeHash(state);
   });
+
+  // --- deep links: #span=<id>&tab=insights&left=opps&opp=opp-2 ---------------------------------
+  function writeHash(state) {
+    const p = new URLSearchParams();
+    if (state.selectedId) p.set('span', state.selectedId);
+    if (state.sideTab !== 'details') p.set('tab', state.sideTab);
+    if (state.leftTab !== 'calls') p.set('left', state.leftTab);
+    if (state.oppExpanded) p.set('opp', state.oppExpanded);
+    const hash = p.toString();
+    try {
+      history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
+    } catch {
+      // some file:// contexts refuse history changes; links just won't update
+    }
+  }
+  function readHash() {
+    const p = new URLSearchParams(location.hash.slice(1));
+    const { prepared } = store.get();
+    if (!prepared) return;
+    const span = p.get('span');
+    const byCallId = span && !prepared.byId.has(span) ? prepared.trace.spans.find((x) => x.attrs?.['tool.call_id'] === span)?.id : null;
+    const patch = {};
+    if (LEFT_TABS.includes(p.get('left'))) patch.leftTab = p.get('left');
+    if (p.get('opp') && prepared.opportunities.some((o) => o.id === p.get('opp'))) patch.oppExpanded = p.get('opp');
+    if (['details', 'insights'].includes(p.get('tab'))) patch.sideTab = p.get('tab');
+    store.set(patch);
+    const id = byCallId ?? (prepared.byId.has(span) ? span : null);
+    if (id) {
+      store.set({ selectedId: id });
+      timeline.zoomToSpan(id);
+    }
+  }
 
   // --- moments navigation -----------------------------------------------------------------
   function stepMoment(dir) {
@@ -351,7 +425,7 @@ export function startApp() {
   function renderOrderButton() {
     const desc = store.get().treeOrder === 'desc';
     const b = $('btn-order');
-    b.innerHTML = `${icon('sort', 14)}<span>${desc ? 'Newest first' : 'Oldest first'}</span>`;
+    b.innerHTML = `${icon('sort', 13)}<span>${desc ? 'Newest first' : 'Oldest first'}</span>`;
     b.setAttribute('aria-pressed', String(desc));
   }
   function toggleOrder() {
@@ -463,6 +537,11 @@ export function startApp() {
     }
   });
 
+  const stepTree = (key) => {
+    setLeftTab('calls');
+    tree.focus();
+    $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key }));
+  };
   document.addEventListener('keydown', (e) => {
     const typing = e.target.matches?.('input, textarea, select, [contenteditable]');
     if (e.key === 'Escape') {
@@ -473,18 +552,24 @@ export function startApp() {
     }
     if (typing || e.metaKey || e.ctrlKey || e.altKey || !store.get().prepared) return;
     const actions = {
-      '/': () => $('search').focus(),
+      '/': () => {
+        setLeftTab('calls');
+        $('search').focus();
+      },
+      1: () => setLeftTab('calls'),
+      2: () => setLeftTab('opps'),
+      3: () => setLeftTab('overview'),
       t: cycleTheme,
       f: () => timeline.fit(),
       '?': () => help.showModal(),
       ']': () => stepMoment(1),
       '[': () => stepMoment(-1),
       i: () => store.set({ sideTab: 'insights' }),
+      d: () => store.set({ sideTab: 'details' }),
       o: toggleOrder,
       c: clearAll,
-      d: () => store.set({ sideTab: 'details' }),
-      j: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' })),
-      k: () => tree.focus() || $('tree').querySelector('.tree-viewport').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' })),
+      j: () => stepTree('ArrowDown'),
+      k: () => stepTree('ArrowUp'),
       Enter: () => store.get().selectedId && document.activeElement === document.body && timeline.zoomToSpan(store.get().selectedId),
     };
     if (actions[e.key]) {
@@ -494,6 +579,7 @@ export function startApp() {
   });
 
   applyTheme();
+  renderLeft();
 
   // embedded data from `agent-trace view`
   const embedded = $('agent-trace-data')?.textContent.trim();
@@ -501,6 +587,7 @@ export function startApp() {
     try {
       const payload = JSON.parse(embedded);
       loadTraces(payload.traces ?? [payload]);
+      readHash();
     } catch (e) {
       toast(`Could not read the embedded trace: ${e.message}`, 'error');
     }

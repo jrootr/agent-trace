@@ -8,8 +8,13 @@ import { buildHtml, bundleScripts, safeJsonForHtml, BUNDLE_ORDER } from '../src/
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const scriptOf = (html) => html.match(/<script>([\s\S]*)<\/script>\s*<\/body>/)[1];
-const dataOf = (html) => JSON.parse(html.match(/<script type="application\/json" id="agent-trace-data">([\s\S]*?)<\/script>/)[1]);
+// Slice by markers rather than lazy regexes (linear time, and nothing for scanners to flag).
+const scriptOf = (html) => html.slice(html.lastIndexOf('<script>') + '<script>'.length, html.lastIndexOf('</script>'));
+const DATA_OPEN = '<script type="application/json" id="agent-trace-data">';
+const dataOf = (html) => {
+  const start = html.indexOf(DATA_OPEN) + DATA_OPEN.length;
+  return JSON.parse(html.slice(start, html.indexOf('</script>', start)));
+};
 
 test('bundle is one valid script that bundles every viewer module', () => {
   const js = bundleScripts();

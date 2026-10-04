@@ -30,7 +30,7 @@ const SECRET_PATTERNS = [
   [/\bnpm_[A-Za-z0-9]{36}\b/, 'npm token'],
 ];
 // Test fixtures deliberately contain fake secrets to prove they get redacted.
-const SECRET_ALLOW = new Set(['test/fixtures/transcript.mjs', 'test/cli.test.mjs', 'test/core.test.mjs', 'src/core/redact.mjs', 'scripts/lint.mjs']);
+const SECRET_ALLOW = new Set(['test/fixtures/transcript.mjs', 'test/cli.test.mjs', 'test/security.test.mjs', 'test/core.test.mjs', 'src/core/redact.mjs', 'scripts/lint.mjs']);
 
 for (const f of tracked) {
   const full = path.join(ROOT, f);
@@ -50,7 +50,7 @@ for (const f of tracked) {
   }
   if (GENERATED.has(f)) continue;
   text.split('\n').forEach((line, i) => {
-    if (/[ \t]+$/.test(line) && !f.endsWith('.md')) report(f, i + 1, 'trailing whitespace');
+    if (line !== line.trimEnd() && !f.endsWith('.md')) report(f, i + 1, 'trailing whitespace');
     if (/\.(mjs|css|html|yml)$/.test(f) && line.includes('\t')) report(f, i + 1, 'tab character (use spaces)');
     if (SHIPPED(f) && f.endsWith('.mjs')) {
       if (/\bconsole\.(log|debug)\(/.test(line)) report(f, i + 1, 'console.log in shipped code');

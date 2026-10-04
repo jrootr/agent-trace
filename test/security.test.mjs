@@ -5,8 +5,8 @@ import crypto from 'node:crypto';
 import { parseAny } from '../src/adapters/registry.mjs';
 import { sanitizeTrace } from '../src/core/model.mjs';
 import { prepareTrace } from '../src/viewer/store.mjs';
-import { renderDetails } from '../src/viewer/panels.mjs';
-import { renderInsights } from '../src/viewer/insights.mjs';
+import { renderDetails, renderSelectionHeader } from '../src/viewer/panels.mjs';
+import { renderOpportunityList, renderOverview, renderScopedInsights } from '../src/viewer/insights.mjs';
 import { buildHtml, contentSecurityPolicy } from '../src/build/bundle.mjs';
 import { toOtlp } from '../src/adapters/otlp.mjs';
 
@@ -48,8 +48,11 @@ test('rendered panels never contain raw markup from the trace', () => {
   const prepared = prepareTrace(hostileTrace());
   const htmls = [
     ...prepared.trace.spans.map((s) => renderDetails(prepared, s.id).html),
-    renderInsights(prepared, { scope: { mode: 'session', label: XSS } }).html,
-    renderInsights(prepared, { scope: { mode: 'auto', rootId: 's', label: XSS } }).html,
+    ...prepared.trace.spans.map((s) => renderSelectionHeader(prepared, s.id)),
+    renderScopedInsights(prepared, { scope: { mode: 'selection', rootId: 's', label: XSS } }).html,
+    renderScopedInsights(prepared, { scope: { mode: 'view', t0: 0, t1: 10, label: XSS } }).html,
+    renderOpportunityList(prepared, { expandedId: prepared.opportunities[0]?.id }),
+    renderOverview(prepared),
   ];
   for (const html of htmls) {
     assert.ok(!/<img|<script|onerror=|url\(https/i.test(html.replace(/&lt;img|&lt;script|onerror=alert\(1\)&gt;|url\(https:\/\/evil\.example\)/g, '')), 'no live markup');
@@ -65,7 +68,7 @@ test('built report: strict CSP whose hash matches the inline script; hostile dat
   assert.match(csp, /connect-src 'none'/);
   assert.ok(!/unsafe-eval/.test(csp));
   assert.ok(!/script-src[^;]*unsafe-inline/.test(csp), 'no inline-script escape hatch');
-  const script = /<script>([\s\S]*)<\/script>\s*<\/body>/.exec(html)[1];
+  const script = html.slice(html.lastIndexOf('<script>') + '<script>'.length, html.lastIndexOf('</script>'));
   const hash = crypto.createHash('sha256').update(script, 'utf8').digest('base64');
   assert.ok(csp.includes(`'sha256-${hash}'`), 'CSP allows exactly the bundled script');
   assert.equal(contentSecurityPolicy(script), csp);
@@ -78,4 +81,32 @@ test('OTLP export keeps hostile strings as plain attribute values', () => {
   const values = JSON.stringify(doc);
   assert.ok(values.includes('onerror=alert(1)'), 'data preserved (it is data, not markup)');
   for (const s of doc.resourceSpans[0].scopeSpans[0].spans) assert.match(s.spanId, /^[0-9a-f]{16}$/);
+});
+
+test('no catastrophic backtracking on hostile transcripts (ReDoS regression)', async () => {
+  const { cleanPromptText } = await import('../src/adapters/claude-code.mjs');
+  const { redactString } = await import('../src/core/redact.mjs');
+  // Inputs shaped to make lazy "match anything up to a closing tag" regexes backtrack.
+  const openTags = '<system-reminder>'.repeat(50000) + 'x';
+  const commands = '<command-name>'.repeat(50000);
+  const pem = '-----BEGIN RSA PRIVATE KEY-----'.repeat(20000);
+  const t0 = performance.now();
+  cleanPromptText(openTags);
+  cleanPromptText(commands);
+  redactString(pem);
+  redactString('-----BEGIN '.repeat(50000));
+  assert.ok(performance.now() - t0 < 1000, 'linear-time scanning');
+});
+
+test('marker-based parsing keeps the old behavior', async () => {
+  const { cleanPromptText } = await import('../src/adapters/claude-code.mjs');
+  const { redactString } = await import('../src/core/redact.mjs');
+  assert.equal(cleanPromptText('<system-reminder>a</system-reminder>hi<ide_selection>b</ide_selection> there'), 'hi there');
+  assert.equal(cleanPromptText('<system-reminder>never closed hi'), '<system-reminder>never closed hi', 'unclosed wrappers are left alone');
+  assert.equal(cleanPromptText('<command-name>/x</command-name>'), '/x');
+  const key = '-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n-----END RSA PRIVATE KEY-----';
+  assert.equal(redactString(`a ${key} b ${key} c`), 'a [REDACTED] b [REDACTED] c');
+  assert.equal(redactString('x -----BEGIN PRIVATE KEY-----\nMIIabc (cut off)'), 'x [REDACTED]', 'unterminated key redacted to the end');
+  const cert = '-----BEGIN CERTIFICATE-----\nMIIabc\n-----END CERTIFICATE-----';
+  assert.equal(redactString(cert), cert, 'public certificates are not secrets');
 });

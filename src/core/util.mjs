@@ -49,3 +49,29 @@ export function contentText(content) {
     .filter(Boolean)
     .join('\n');
 }
+
+/**
+ * Text between the first `open` marker and the next `close` marker, or null.
+ * Plain indexOf scanning: linear time on any input (no regex backtracking).
+ */
+export function textBetween(text, open, close) {
+  const s = String(text ?? '');
+  const a = s.indexOf(open);
+  if (a < 0) return null;
+  const b = s.indexOf(close, a + open.length);
+  return b < 0 ? null : s.slice(a + open.length, b);
+}
+
+/** Remove every `open`…`close` section (markers included). Unclosed sections are left as is. */
+export function removeSections(text, open, close) {
+  let s = String(text ?? '');
+  let from = 0;
+  for (;;) {
+    const a = s.indexOf(open, from);
+    if (a < 0) return s;
+    const b = s.indexOf(close, a + open.length);
+    if (b < 0) return s;
+    s = s.slice(0, a) + s.slice(b + close.length);
+    from = a;
+  }
+}
